@@ -1,0 +1,36 @@
+{
+  "name": "x402-toolkit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "x402 Paywalled Agent Tools – monorepo root",
+  "type": "module",
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=8"
+  },
+  "scripts": {
+    "build": "pnpm -r --filter './packages/*' run build",
+    "dev": "node scripts/dev.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint 'packages/*/src/**/*.ts' 'examples/*/src/**/*.ts' 'tests/**/*.ts' 'evals/**/*.ts'",
+    "lint:fix": "eslint --fix 'packages/*/src/**/*.ts' 'examples/*/src/**/*.ts' 'tests/**/*.ts' 'evals/**/*.ts'",
+    "typecheck": "pnpm -r run typecheck",
+    "eval": "tsx evals/quick_eval.ts",
+    "clean": "pnpm -r run clean && rimraf node_modules"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.0",
+    "fastify": "^4.28.0",
+    "rimraf": "^5.0.10",
+    "tsx": "^4.21.0",
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5",
+    "x402-adapters": "workspace:*",
+    "x402-agent-client": "workspace:*",
+    "x402-tool-server": "workspace:*"
+  }
+}

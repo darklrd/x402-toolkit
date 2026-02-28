@@ -1,0 +1,35 @@
+{
+  "name": "x402-tool-server",
+  "version": "0.1.0",
+  "description": "Fastify middleware for x402 HTTP-payment-gated tool endpoints",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rimraf dist *.tsbuildinfo",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "fastify": ">=4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "fastify": "^4.28.0",
+    "rimraf": "^5.0.10",
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "fastify-plugin": "^5.1.0"
+  }
+}
