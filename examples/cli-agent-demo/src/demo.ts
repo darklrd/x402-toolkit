@@ -6,14 +6,39 @@
  *
  * Or start everything at once:
  *   pnpm dev
+ *
+ * Environment variables:
+ *   PAYMENT_MODE=mock    (default) — use MockPayer with MOCK_SECRET
+ *   PAYMENT_MODE=solana            — use SolanaUSDCPayer; requires SOLANA_PRIVATE_KEY
+ *   MOCK_SECRET          shared HMAC secret (mock mode only)
+ *   SOLANA_PRIVATE_KEY   base58 or JSON-array private key (solana mode only)
+ *   SOLANA_RPC_URL       override Solana RPC endpoint (solana mode only)
  */
 import { x402Fetch, createTool } from 'x402-agent-client';
 import { MockPayer } from 'x402-adapters';
+import { SolanaUSDCPayer } from 'x402-adapters/solana';
 
 const BASE_URL = process.env['SERVER_URL'] ?? 'http://127.0.0.1:3000';
-const MOCK_SECRET = process.env['MOCK_SECRET'] ?? 'mock-secret';
+const PAYMENT_MODE = process.env['PAYMENT_MODE'] ?? 'mock';
 
-const payer = new MockPayer({ secret: MOCK_SECRET });
+function buildPayer(): MockPayer | SolanaUSDCPayer {
+  if (PAYMENT_MODE === 'solana') {
+    const privateKey = process.env['SOLANA_PRIVATE_KEY'];
+    if (!privateKey) {
+      throw new Error('SOLANA_PRIVATE_KEY env var is required when PAYMENT_MODE=solana');
+    }
+    const payer = new SolanaUSDCPayer({
+      privateKey,
+      rpcUrl: process.env['SOLANA_RPC_URL'],
+    });
+    console.log(`[solana] Payer wallet: ${payer.publicKey.toBase58()}\n`);
+    return payer;
+  }
+
+  return new MockPayer({ secret: process.env['MOCK_SECRET'] ?? 'mock-secret' });
+}
+
+const payer = buildPayer();
 
 function divider(title: string) {
   const line = '─'.repeat(60);

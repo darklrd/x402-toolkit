@@ -6,15 +6,55 @@
  * Endpoints:
  *   GET /health          — health check (no payment required)
  *   GET /weather?city=… — priced: requires X-Payment-Proof header
+ *
+ * Environment variables:
+ *   PAYMENT_MODE=mock    (default) — use MockVerifier with MOCK_SECRET
+ *   PAYMENT_MODE=solana            — use SolanaUSDCVerifier; requires RECIPIENT_WALLET
+ *   MOCK_SECRET          shared HMAC secret (mock mode only)
+ *   RECIPIENT_WALLET     base58 Solana public key (solana mode only)
+ *   SOLANA_RPC_URL       override Solana RPC endpoint (solana mode only)
  */
 import Fastify from 'fastify';
 import { createX402Middleware, pricedRoute } from 'x402-tool-server';
+import type { VerifierInterface, PricingConfig } from 'x402-tool-server';
 import { MockVerifier } from 'x402-adapters';
+import { SolanaUSDCVerifier } from 'x402-adapters/solana';
 
-// Shared secret — must match MockPayer secret used by the client.
-const MOCK_SECRET = process.env['MOCK_SECRET'] ?? 'mock-secret';
+const PAYMENT_MODE = process.env['PAYMENT_MODE'] ?? 'mock';
 const PORT = parseInt(process.env['PORT'] ?? '3000', 10);
 const HOST = process.env['HOST'] ?? '127.0.0.1';
+
+function buildVerifierAndPricing(): { verifier: VerifierInterface; pricing: PricingConfig } {
+  if (PAYMENT_MODE === 'solana') {
+    const recipient = process.env['RECIPIENT_WALLET'];
+    if (!recipient) {
+      throw new Error('RECIPIENT_WALLET env var is required when PAYMENT_MODE=solana');
+    }
+    return {
+      verifier: new SolanaUSDCVerifier({ rpcUrl: process.env['SOLANA_RPC_URL'] }),
+      pricing: {
+        price: '0.001',
+        asset: 'USDC',
+        network: 'solana-devnet',
+        recipient,
+        description: 'Current weather data for the requested city',
+        ttlSeconds: 300,
+      },
+    };
+  }
+
+  return {
+    verifier: new MockVerifier({ secret: process.env['MOCK_SECRET'] ?? 'mock-secret' }),
+    pricing: {
+      price: '0.001',
+      asset: 'USDC',
+      network: 'mock',
+      recipient: '0x0000000000000000000000000000000000000002',
+      description: 'Current weather data for the requested city',
+      ttlSeconds: 300,
+    },
+  };
+}
 
 // Mock weather data — simulates an expensive API call.
 const WEATHER_DATA: Record<string, { temp: number; condition: string; humidity: number }> = {
@@ -27,30 +67,17 @@ const WEATHER_DATA: Record<string, { temp: number; condition: string; humidity: 
 
 async function build() {
   const fastify = Fastify({ logger: { level: 'info' } });
+  const { verifier, pricing } = buildVerifierAndPricing();
 
-  // ── Register x402 middleware ──────────────────────────────────────────────
-  fastify.register(
-    createX402Middleware({
-      verifier: new MockVerifier({ secret: MOCK_SECRET }),
-    }),
-  );
+  fastify.register(createX402Middleware({ verifier }));
 
-  // ── Health endpoint (free) ────────────────────────────────────────────────
   fastify.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
 
-  // ── Priced weather endpoint ───────────────────────────────────────────────
   fastify.route(
     pricedRoute({
       method: 'GET',
       url: '/weather',
-      pricing: {
-        price: '0.001',
-        asset: 'USDC',
-        network: 'mock',
-        recipient: '0x0000000000000000000000000000000000000002',
-        description: 'Current weather data for the requested city',
-        ttlSeconds: 300,
-      },
+      pricing,
       schema: {
         querystring: {
           type: 'object',
@@ -103,9 +130,9 @@ async function build() {
 const app = await build();
 try {
   await app.listen({ port: PORT, host: HOST });
-  console.log(`\n✅ paid-weather-tool running at http://${HOST}:${PORT}`);
+  console.log(`\n✅ paid-weather-tool running at http://${HOST}:${PORT} [mode: ${PAYMENT_MODE}]`);
   console.log(`   GET /health        — free`);
-  console.log(`   GET /weather?city= — priced (0.001 USDC mock)\n`);
+  console.log(`   GET /weather?city= — priced (0.001 USDC ${PAYMENT_MODE})\n`);
 } catch (err) {
   app.log.error(err);
   process.exit(1);

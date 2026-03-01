@@ -14,9 +14,15 @@
     "./mock": {
       "import": "./dist/mock/index.js",
       "types": "./dist/mock/index.d.ts"
+    },
+    "./solana": {
+      "import": "./dist/solana/index.js",
+      "types": "./dist/solana/index.d.ts"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "clean": "rimraf dist *.tsbuildinfo",
@@ -26,5 +32,11 @@
     "@types/node": "^20.14.0",
     "rimraf": "^5.0.10",
     "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "@solana/spl-memo": "^0.2.5",
+    "@solana/spl-token": "^0.4.14",
+    "@solana/web3.js": "^1.98.4",
+    "bs58": "^6.0.0"
   }
 }

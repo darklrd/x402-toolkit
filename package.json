@@ -20,9 +20,12 @@
     "clean": "pnpm -r run clean && rimraf node_modules"
   },
   "devDependencies": {
+    "@solana/spl-token": "^0.4.14",
+    "@solana/web3.js": "^1.98.4",
     "@types/node": "^20.14.0",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
+    "bs58": "^6.0.0",
     "eslint": "^8.57.0",
     "fastify": "^4.28.0",
     "rimraf": "^5.0.10",
