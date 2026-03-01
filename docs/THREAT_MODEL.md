@@ -78,11 +78,22 @@
 **Mitigations**:
 1. Use a long, random secret (≥32 bytes) in production mock deployments.
 2. HMAC-SHA256 is secure against brute-force with a strong secret.
-3. In production, replace `MockVerifier` with an on-chain verifier that validates cryptographic signatures (e.g. EIP-712, Solana signatures).
+3. For production payments, use `SolanaUSDCVerifier` — proof forgery requires sending a real on-chain transaction to the recipient's ATA, which costs real funds and is visible on-chain.
 
 ---
 
-### T8 — DoS via Large Nonce Store
+### T8 — Solana Tx Reuse Across Requests
+
+**Threat**: Attacker pays for one request (e.g. `GET /weather?city=Paris`) and reuses the on-chain tx signature to access a different request (e.g. `GET /weather?city=Tokyo`).
+
+**Mitigations**:
+1. **Memo binding** — every payment tx includes `Memo("${nonce}|${requestHash}")`. The verifier checks this memo and rejects the tx if the memo does not match `"${proof.nonce}|${requestHash}"` for the current request.
+2. **Nonce replay protection** — the server-side nonce store rejects any proof whose nonce has already been used, even if a new tx signature is provided.
+3. **blockTime freshness check** — transactions older than 600 seconds are rejected, bounding the reuse window for any captured tx.
+
+---
+
+### T9 — DoS via Large Nonce Store
 
 **Threat**: Attacker floods the server with unique nonces, exhausting memory.
 
@@ -92,7 +103,6 @@
 
 ## Out of Scope (MVP)
 
-- Real on-chain payment verification
 - Rate limiting
 - Proof confidentiality (TLS assumed in production)
 - Multi-tenant nonce stores (single-process in MVP; use Redis for multi-node)

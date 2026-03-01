@@ -107,16 +107,42 @@ The API is intentionally minimal:
 - Types: `PayerInterface`, `RequestContext`, `PaymentProof`, `X402FetchOptions`, `ToolConfig`
 
 **Adapters** (`x402-adapters`):
-- `MockPayer` — HMAC payer
-- `MockVerifier` — HMAC verifier
+- `MockPayer` — HMAC payer (default subpath `x402-adapters`)
+- `MockVerifier` — HMAC verifier (default subpath `x402-adapters`)
+- `SolanaUSDCPayer` — real SPL token transfer payer (subpath `x402-adapters/solana`)
+- `SolanaUSDCVerifier` — on-chain tx verifier (subpath `x402-adapters/solana`)
 
-## Real Payer Roadmap
+## SolanaUSDCPayer / SolanaUSDCVerifier
 
-When implementing the real adapter:
+The Solana adapter performs real on-chain USDC transfers on Solana devnet.
 
-1. `RealVerifier.verify()`: call Coinbase x402 verification API or verify on-chain transaction.
-2. `RealPayer.pay()`: use a wallet (e.g. Coinbase Wallet SDK, viem) to sign and broadcast an ERC-20 transfer.
-3. Wire format: switch to `{ accepts: [{ scheme: 'exact', ... }] }` per Coinbase spec.
-4. Update `X-Payment-Proof` → `X-PAYMENT` per Coinbase spec, or keep extensible.
+### Key design decisions
 
-Do NOT implement until all mock-mode acceptance criteria pass.
+**Subpath export** (`x402-adapters/solana`): `@solana/web3.js` is a large dependency. Mock-only users import from `x402-adapters` and never pay the bundle cost.
+
+**Recipient ATA pre-creation**: The payer throws `"Recipient has no USDC token account"` if the recipient's Associated Token Account (ATA) does not exist. The payer does NOT auto-create it — auto-creation adds lamports to the tx and requires the payer to fund an account for the recipient, which changes the trust model. Recipients must run `spl-token create-account` once before receiving payments.
+
+**Memo binding**: Every payment transaction includes a Memo instruction:
+```
+Memo: "${nonce}|${requestHash}"
+```
+This cryptographically binds the on-chain tx to a specific 402 challenge nonce and request. A tx from a different request cannot be replayed here even if it reaches the same recipient address. The verifier checks this memo before accepting payment.
+
+**Amount arithmetic with bigint**: Price strings (e.g. `"0.001"`) are converted to micro-USDC using string splitting and `BigInt()` arithmetic to avoid floating-point precision errors. For example, `"0.001"` → `1000n` micro-USDC (never `999n` or `1001n`).
+
+**Recipient verification without extra RPC call**: Rather than fetching the destination ATA account to check its owner, the verifier derives the expected ATA address with `getAssociatedTokenAddressSync(USDC_DEVNET_MINT, new PublicKey(pricing.recipient))` and compares it directly to the instruction's `destination` field. This avoids a round-trip to the RPC node.
+
+**Type-safe RPC response parsing**: `@solana/web3.js` types `ParsedInstruction.parsed` as `any`. To avoid propagating `any`, the verifier assigns `ix.parsed` to `const parsed: unknown` and narrows it through a local type guard `isTransferCheckedParsed(parsed: unknown)` before reading any fields.
+
+**blockTime validation**: The verifier rejects transactions where:
+- `blockTime` is null (not yet confirmed)
+- `blockTime` is older than 600 seconds (stale tx reuse prevention)
+- `blockTime` is after `proof.expiresAt` (tx submitted after challenge expired)
+
+### Switching adapters
+
+Both demo apps use a single `PAYMENT_MODE` env var:
+```
+PAYMENT_MODE=mock    # default — MockPayer/MockVerifier, no network
+PAYMENT_MODE=solana  # SolanaUSDCPayer/SolanaUSDCVerifier, Solana devnet
+```
