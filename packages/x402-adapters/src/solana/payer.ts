@@ -51,6 +51,11 @@ export interface SolanaUSDCPayerOptions {
   privateKey: string;
   rpcUrl?: string;
   commitment?: 'confirmed' | 'finalized';
+  /**
+   * USDC mint address. Defaults to USDC devnet mint.
+   * Pass USDC_MAINNET_MINT (or the mint address string) for mainnet.
+   */
+  mintAddress?: PublicKey | string;
 }
 
 function loadKeypair(privateKey: string): Keypair {
@@ -74,11 +79,15 @@ export class SolanaUSDCPayer implements PayerInterface {
   private readonly keypair: Keypair;
   private readonly connection: Connection;
   private readonly commitment: 'confirmed' | 'finalized';
+  private readonly mint: PublicKey;
 
   constructor(options: SolanaUSDCPayerOptions) {
     this.keypair = loadKeypair(options.privateKey);
     this.connection = new Connection(options.rpcUrl ?? DEFAULT_RPC_URL, options.commitment ?? DEFAULT_COMMITMENT);
     this.commitment = options.commitment ?? DEFAULT_COMMITMENT;
+    this.mint = options.mintAddress instanceof PublicKey
+      ? options.mintAddress
+      : new PublicKey(options.mintAddress ?? USDC_DEVNET_MINT);
   }
 
   get publicKey(): PublicKey {
@@ -91,7 +100,7 @@ export class SolanaUSDCPayer implements PayerInterface {
     const recipientPubkey = new PublicKey(recipient);
 
     // Resolve payer's ATA — throw if not found
-    const fromATA = getAssociatedTokenAddressSync(USDC_DEVNET_MINT, this.keypair.publicKey);
+    const fromATA = getAssociatedTokenAddressSync(this.mint, this.keypair.publicKey);
     await getAccount(this.connection, fromATA).catch(() => {
       throw new Error(
         `Payer has no USDC token account. Create an ATA for ${this.keypair.publicKey.toBase58()} first.`,
@@ -99,7 +108,7 @@ export class SolanaUSDCPayer implements PayerInterface {
     });
 
     // Resolve recipient's ATA — throw if not found (recipient must pre-create it)
-    const toATA = getAssociatedTokenAddressSync(USDC_DEVNET_MINT, recipientPubkey);
+    const toATA = getAssociatedTokenAddressSync(this.mint, recipientPubkey);
     await getAccount(this.connection, toATA).catch(() => {
       throw new Error(
         `Recipient has no USDC token account. The recipient (${recipient}) must pre-create their USDC ATA before receiving payments.`,
@@ -109,7 +118,7 @@ export class SolanaUSDCPayer implements PayerInterface {
     const tx = new Transaction().add(
       createTransferCheckedInstruction(
         fromATA,
-        USDC_DEVNET_MINT,
+        this.mint,
         toATA,
         this.keypair.publicKey,
         amount,

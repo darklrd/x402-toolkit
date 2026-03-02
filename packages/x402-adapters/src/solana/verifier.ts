@@ -49,6 +49,16 @@ export interface SolanaUSDCVerifierOptions {
   rpcUrl?: string;
   commitment?: 'confirmed' | 'finalized';
   amountTolerance?: bigint;
+  /**
+   * USDC mint address. Defaults to USDC devnet mint.
+   * Pass USDC_MAINNET_MINT (or the mint address string) for mainnet.
+   */
+  mintAddress?: PublicKey | string;
+  /**
+   * Maximum age of a transaction in seconds before it is rejected as stale.
+   * Default: 600 (10 minutes).
+   */
+  maxAgeSeconds?: number;
 }
 
 function priceToMicroUnits(price: string): bigint {
@@ -79,11 +89,17 @@ export class SolanaUSDCVerifier implements VerifierInterface {
   private readonly connection: Connection;
   private readonly commitment: 'confirmed' | 'finalized';
   private readonly amountTolerance: bigint;
+  private readonly mint: PublicKey;
+  private readonly maxAgeSeconds: number;
 
   constructor(options: SolanaUSDCVerifierOptions = {}) {
     this.connection = new Connection(options.rpcUrl ?? DEFAULT_RPC_URL, options.commitment ?? DEFAULT_COMMITMENT);
     this.commitment = options.commitment ?? DEFAULT_COMMITMENT;
     this.amountTolerance = options.amountTolerance ?? 0n;
+    this.mint = options.mintAddress instanceof PublicKey
+      ? options.mintAddress
+      : new PublicKey(options.mintAddress ?? USDC_DEVNET_MINT);
+    this.maxAgeSeconds = options.maxAgeSeconds ?? 600;
   }
 
   async verify(proofHeader: string, requestHash: string, pricing: PricingConfig): Promise<boolean> {
@@ -120,7 +136,7 @@ export class SolanaUSDCVerifier implements VerifierInterface {
     // Derive expected recipient ATA to compare against transfer destination
     let expectedRecipientATA: PublicKey;
     try {
-      expectedRecipientATA = getAssociatedTokenAddressSync(USDC_DEVNET_MINT, new PublicKey(pricing.recipient));
+      expectedRecipientATA = getAssociatedTokenAddressSync(this.mint, new PublicKey(pricing.recipient));
     } catch {
       return false;
     }
@@ -135,7 +151,7 @@ export class SolanaUSDCVerifier implements VerifierInterface {
         if (isTransferCheckedParsed(parsed)) {
           const { mint, destination, tokenAmount } = parsed.info;
           if (
-            mint === USDC_DEVNET_MINT.toBase58() &&
+            mint === this.mint.toBase58() &&
             destination === expectedRecipientATA.toBase58() &&
             BigInt(tokenAmount.amount) >= expectedAmount - this.amountTolerance
           ) {
@@ -162,8 +178,7 @@ export class SolanaUSDCVerifier implements VerifierInterface {
     const expiresAtSec = expiry.getTime() / 1000;
     if (blockTime > expiresAtSec) return false;
 
-    const MAX_AGE_SECONDS = 600;
-    if (blockTime < Date.now() / 1000 - MAX_AGE_SECONDS) return false;
+    if (blockTime < Date.now() / 1000 - this.maxAgeSeconds) return false;
 
     return true;
   }

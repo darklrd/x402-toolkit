@@ -10,16 +10,18 @@
  * Environment variables:
  *   PAYMENT_MODE=mock    (default) — use MockPayer with MOCK_SECRET
  *   PAYMENT_MODE=solana            — use SolanaUSDCPayer; requires SOLANA_PRIVATE_KEY
+ *   SOLANA_CLUSTER=devnet (default) | mainnet — selects USDC mint + default RPC URL
  *   MOCK_SECRET          shared HMAC secret (mock mode only)
  *   SOLANA_PRIVATE_KEY   base58 or JSON-array private key (solana mode only)
- *   SOLANA_RPC_URL       override Solana RPC endpoint (solana mode only)
+ *   SOLANA_RPC_URL       override Solana RPC endpoint (solana mode only; recommended for mainnet)
  */
 import { x402Fetch, createTool } from 'x402-agent-client';
 import { MockPayer } from 'x402-adapters';
-import { SolanaUSDCPayer } from 'x402-adapters/solana';
+import { SolanaUSDCPayer, USDC_DEVNET_MINT, USDC_MAINNET_MINT, DEFAULT_RPC_URL, DEFAULT_MAINNET_RPC_URL } from 'x402-adapters/solana';
 
 const BASE_URL = process.env['SERVER_URL'] ?? 'http://127.0.0.1:3000';
 const PAYMENT_MODE = process.env['PAYMENT_MODE'] ?? 'mock';
+const SOLANA_CLUSTER = process.env['SOLANA_CLUSTER'] ?? 'devnet';
 
 function buildPayer(): MockPayer | SolanaUSDCPayer {
   if (PAYMENT_MODE === 'solana') {
@@ -27,11 +29,14 @@ function buildPayer(): MockPayer | SolanaUSDCPayer {
     if (!privateKey) {
       throw new Error('SOLANA_PRIVATE_KEY env var is required when PAYMENT_MODE=solana');
     }
+    const isMainnet = SOLANA_CLUSTER === 'mainnet';
+    const defaultRpc = isMainnet ? DEFAULT_MAINNET_RPC_URL : DEFAULT_RPC_URL;
     const payer = new SolanaUSDCPayer({
       privateKey,
-      rpcUrl: process.env['SOLANA_RPC_URL'],
+      rpcUrl: process.env['SOLANA_RPC_URL'] ?? defaultRpc,
+      mintAddress: isMainnet ? USDC_MAINNET_MINT : USDC_DEVNET_MINT,
     });
-    console.log(`[solana] Payer wallet: ${payer.publicKey.toBase58()}\n`);
+    console.log(`[solana/${SOLANA_CLUSTER}] Payer wallet: ${payer.publicKey.toBase58()}\n`);
     return payer;
   }
 

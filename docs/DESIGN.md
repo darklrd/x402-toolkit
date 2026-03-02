@@ -139,10 +139,37 @@ This cryptographically binds the on-chain tx to a specific 402 challenge nonce a
 - `blockTime` is older than 600 seconds (stale tx reuse prevention)
 - `blockTime` is after `proof.expiresAt` (tx submitted after challenge expired)
 
-### Switching adapters
+**`maxAgeSeconds` option**: The maximum age of an accepted on-chain tx in seconds, defaulting to 600. This bounds how old a tx can be relative to the current time before it is rejected as stale. For high-security mainnet deployments you might lower this; for slow networks you might raise it.
 
-Both demo apps use a single `PAYMENT_MODE` env var:
+### Configuring for devnet vs mainnet
+
+Both `SolanaUSDCPayer` and `SolanaUSDCVerifier` accept a `mintAddress` option (defaults to `USDC_DEVNET_MINT`). All cluster-specific constants are exported from `x402-adapters/solana`:
+
+```ts
+import {
+  SolanaUSDCVerifier,
+  USDC_DEVNET_MINT,
+  USDC_MAINNET_MINT,
+  DEFAULT_RPC_URL,
+  DEFAULT_MAINNET_RPC_URL,
+} from 'x402-adapters/solana';
+
+// devnet (default)
+new SolanaUSDCVerifier();
+
+// mainnet
+new SolanaUSDCVerifier({
+  mintAddress: USDC_MAINNET_MINT,
+  rpcUrl: 'https://mainnet.helius-rpc.com/?api-key=<key>',
+  commitment: 'finalized',
+});
+```
+
+Both demo apps use two env vars for cluster selection:
 ```
 PAYMENT_MODE=mock    # default — MockPayer/MockVerifier, no network
-PAYMENT_MODE=solana  # SolanaUSDCPayer/SolanaUSDCVerifier, Solana devnet
+PAYMENT_MODE=solana  # SolanaUSDCPayer/SolanaUSDCVerifier
+
+SOLANA_CLUSTER=devnet    # default — USDC devnet mint, public devnet RPC
+SOLANA_CLUSTER=mainnet   # USDC mainnet mint, public mainnet RPC (override with SOLANA_RPC_URL)
 ```

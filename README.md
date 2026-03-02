@@ -2,7 +2,7 @@
 
 > Gate any HTTP tool endpoint behind a micropayment using the [HTTP 402](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402) Payment Required status — with automatic 402 → pay → retry handled by the client.
 
-Works **100% offline/locally** with the mock payer. No real funds, no wallet, no chain required in the default mode. Switch to **real Solana USDC payments on devnet** with a single env var.
+Works **100% offline/locally** with the mock payer. No real funds, no wallet, no chain required in the default mode. Switch to **real Solana USDC payments** (devnet or mainnet) with a single env var.
 
 [![CI](https://github.com/your-org/x402-toolkit/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/x402-toolkit/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -42,18 +42,22 @@ You'll see:
 
 ---
 
-## Solana devnet quickstart (real USDC)
+## Solana quickstart (real USDC)
 
-1. **Fund your devnet wallet:**
+Defaults to **devnet**. Set `SOLANA_CLUSTER=mainnet` for production (see [mainnet notes](#solana-mainnet) below).
+
+1. **Fund your wallet:**
 
 ```bash
-solana airdrop 2 $(solana address) --url devnet          # SOL for fees
+# devnet — free test tokens
+solana airdrop 2 $(solana address) --url devnet   # SOL for fees
 # Get devnet USDC from https://faucet.circle.com
 ```
 
 2. **Create the recipient's USDC token account** (required before receiving payments):
 
 ```bash
+# devnet
 spl-token create-account 4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU \
   --owner $(solana address) --url devnet
 ```
@@ -64,12 +68,43 @@ spl-token create-account 4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU \
 cp examples/.env.solana.example examples/.env.solana
 # Edit examples/.env.solana — set RECIPIENT_WALLET and SOLANA_PRIVATE_KEY
 
-pnpm exec tsx scripts/setup-devnet.ts   # verify balances + ATA readiness
+pnpm exec tsx scripts/setup-solana.ts   # verify balances + ATA readiness
 
 set -a && source examples/.env.solana && set +a && pnpm build && pnpm dev
 ```
 
 Each request now sends a real SPL token transfer on Solana devnet and verifies it on-chain before serving the response (~500ms confirmation time).
+
+### Solana mainnet
+
+To use real USDC on mainnet, set `SOLANA_CLUSTER=mainnet` in your `.env.solana`. The adapter will automatically use the mainnet USDC mint (`EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`) and a mainnet RPC endpoint.
+
+```bash
+# mainnet — real funds required
+SOLANA_CLUSTER=mainnet
+SOLANA_RPC_URL=https://mainnet.helius-rpc.com/?api-key=<your-key>  # paid RPC recommended
+```
+
+**What changes for mainnet vs devnet:**
+
+| | Devnet | Mainnet |
+|---|---|---|
+| USDC mint | `4zMMC9srt5…` | `EPjFWdd5Au…` |
+| Funds | Free faucet | Real USDC from exchange |
+| RPC | Public devnet (free) | Paid provider recommended |
+| ATA creation | `--url devnet` | `--url mainnet-beta` |
+
+The USDC mint and default RPC URL are selected automatically based on `SOLANA_CLUSTER`. If constructing the adapters directly, pass `mintAddress` explicitly:
+
+```ts
+import { SolanaUSDCVerifier, USDC_MAINNET_MINT, DEFAULT_MAINNET_RPC_URL } from 'x402-adapters/solana';
+
+const verifier = new SolanaUSDCVerifier({
+  mintAddress: USDC_MAINNET_MINT,
+  rpcUrl: 'https://mainnet.helius-rpc.com/?api-key=<your-key>',
+  commitment: 'finalized',   // recommended for mainnet
+});
+```
 
 ---
 
@@ -185,13 +220,14 @@ See [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) for the full threat analysis.
 
 ## Mock vs Solana USDC
 
-| | Mock (default) | Solana USDC (devnet) |
-|---|---|---|
-| Proof | HMAC-SHA256 | On-chain SPL token transfer + memo |
-| Funds | No real funds | USDC on Solana devnet |
-| Works offline | ✅ | ❌ |
-| Confirmation time | ~0ms | ~500ms |
-| Switch via | default | `PAYMENT_MODE=solana` |
+| | Mock (default) | Solana devnet | Solana mainnet |
+|---|---|---|---|
+| Proof | HMAC-SHA256 | On-chain SPL transfer + memo | On-chain SPL transfer + memo |
+| Funds | None | Free (faucet) | Real USDC |
+| Works offline | ✅ | ❌ | ❌ |
+| Confirmation time | ~0ms | ~500ms | ~500ms (`confirmed`) / ~13s (`finalized`) |
+| PAYMENT_MODE | default | `solana` | `solana` |
+| SOLANA_CLUSTER | — | `devnet` (default) | `mainnet` |
 
 ---
 
@@ -205,7 +241,7 @@ pnpm test                       # run all 77 tests
 pnpm lint                       # lint all TypeScript
 pnpm eval                       # 50-call latency + success rate eval
 
-pnpm exec tsx scripts/setup-devnet.ts   # check Solana devnet balances + ATA readiness
+pnpm exec tsx scripts/setup-solana.ts   # check Solana balances + ATA readiness (devnet or mainnet)
 ```
 
 ---
@@ -218,13 +254,13 @@ packages/
   x402-agent-client/   Client fetch wrapper + createTool (no adapter logic)
   x402-adapters/
     src/mock/          MockPayer, MockVerifier (HMAC-SHA256, offline)
-    src/solana/        SolanaUSDCPayer, SolanaUSDCVerifier (devnet)
+    src/solana/        SolanaUSDCPayer, SolanaUSDCVerifier (devnet + mainnet configurable)
 examples/
   paid-weather-tool/   Fastify weather server (mock or solana via PAYMENT_MODE)
   cli-agent-demo/      CLI demo: 402 → pay → retry + createTool
   .env.solana.example  Env var template for Solana mode
 scripts/
-  setup-devnet.ts      Check Solana devnet balances + ATA readiness
+  setup-solana.ts      Check Solana balances + ATA readiness (devnet or mainnet)
 docs/
   SEQUENCE.md          Flow diagrams
   THREAT_MODEL.md      Security analysis

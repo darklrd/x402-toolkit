@@ -10,17 +10,19 @@
  * Environment variables:
  *   PAYMENT_MODE=mock    (default) — use MockVerifier with MOCK_SECRET
  *   PAYMENT_MODE=solana            — use SolanaUSDCVerifier; requires RECIPIENT_WALLET
+ *   SOLANA_CLUSTER=devnet (default) | mainnet — selects USDC mint + default RPC URL
  *   MOCK_SECRET          shared HMAC secret (mock mode only)
  *   RECIPIENT_WALLET     base58 Solana public key (solana mode only)
- *   SOLANA_RPC_URL       override Solana RPC endpoint (solana mode only)
+ *   SOLANA_RPC_URL       override Solana RPC endpoint (solana mode only; recommended for mainnet)
  */
 import Fastify from 'fastify';
 import { createX402Middleware, pricedRoute } from 'x402-tool-server';
 import type { VerifierInterface, PricingConfig } from 'x402-tool-server';
 import { MockVerifier } from 'x402-adapters';
-import { SolanaUSDCVerifier } from 'x402-adapters/solana';
+import { SolanaUSDCVerifier, USDC_DEVNET_MINT, USDC_MAINNET_MINT, DEFAULT_RPC_URL, DEFAULT_MAINNET_RPC_URL } from 'x402-adapters/solana';
 
 const PAYMENT_MODE = process.env['PAYMENT_MODE'] ?? 'mock';
+const SOLANA_CLUSTER = process.env['SOLANA_CLUSTER'] ?? 'devnet';
 const PORT = parseInt(process.env['PORT'] ?? '3000', 10);
 const HOST = process.env['HOST'] ?? '127.0.0.1';
 
@@ -30,12 +32,17 @@ function buildVerifierAndPricing(): { verifier: VerifierInterface; pricing: Pric
     if (!recipient) {
       throw new Error('RECIPIENT_WALLET env var is required when PAYMENT_MODE=solana');
     }
+    const isMainnet = SOLANA_CLUSTER === 'mainnet';
+    const defaultRpc = isMainnet ? DEFAULT_MAINNET_RPC_URL : DEFAULT_RPC_URL;
     return {
-      verifier: new SolanaUSDCVerifier({ rpcUrl: process.env['SOLANA_RPC_URL'] }),
+      verifier: new SolanaUSDCVerifier({
+        rpcUrl: process.env['SOLANA_RPC_URL'] ?? defaultRpc,
+        mintAddress: isMainnet ? USDC_MAINNET_MINT : USDC_DEVNET_MINT,
+      }),
       pricing: {
         price: '0.001',
         asset: 'USDC',
-        network: 'solana-devnet',
+        network: isMainnet ? 'solana-mainnet' : 'solana-devnet',
         recipient,
         description: 'Current weather data for the requested city',
         ttlSeconds: 300,
