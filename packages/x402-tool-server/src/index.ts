@@ -15,6 +15,10 @@
  *   StoredResponse        Type stored by IdempotencyStore
  *   MemoryIdempotencyStore Default in-memory idempotency store
  *
+ *   Receipt               Type: payment receipt record
+ *   ReceiptStore          Interface for receipt storage backends
+ *   MemoryReceiptStore    Default in-memory receipt store
+ *
  *   X402MiddlewareOptions Type: options for createX402Middleware
  *   computeRequestHash    Utility: compute the canonical request hash
  *   canonicalQueryString  Utility: produce sorted canonical query string
@@ -29,6 +33,9 @@ export type { PricedRouteOptions } from './route.js';
 export { computeRequestHash, canonicalQueryString } from './hash.js';
 
 export { MemoryIdempotencyStore } from './idempotency.js';
+
+export { MemoryReceiptStore } from './receipts.js';
+export type { Receipt, ReceiptStore } from './receipts.js';
 
 export type {
   X402Challenge,

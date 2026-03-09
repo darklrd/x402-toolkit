@@ -222,6 +222,30 @@ Pass an `Idempotency-Key` header to prevent double-charging on retries. The serv
 
 See [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) for the full threat analysis.
 
+### Receipts
+
+Enable the receipt store to record every successful payment for audit and verification:
+
+```ts
+import { createX402Middleware, MemoryReceiptStore } from 'x402-tool-server';
+
+const receiptStore = new MemoryReceiptStore();
+
+app.register(createX402Middleware({
+  verifier: new MockVerifier(),
+  receiptStore,
+}));
+```
+
+This auto-registers `GET /x402/receipts/:nonce` — retrieve any payment receipt by its challenge nonce:
+
+```bash
+curl http://localhost:3000/x402/receipts/<nonce>
+# → { nonce, payer, amount, asset, network, recipient, endpoint, method, requestHash, paidAt }
+```
+
+Implement the `ReceiptStore` interface for persistent storage (database, Redis, etc.).
+
 ---
 
 ## Mock vs Solana USDC
