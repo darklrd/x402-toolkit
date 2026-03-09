@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Receipt endpoint: `GET /x402/receipts/:nonce` — retrieve payment receipts for audit/verification
+  - `MemoryReceiptStore` — in-memory store with configurable TTL and automatic expiry sweep
+  - `ReceiptStore` interface for custom backends (database, Redis, etc.)
+  - Middleware auto-saves receipts after successful payment verification when `receiptStore` is provided
+  - 5 new unit tests covering store save/retrieve/expiry and endpoint 200/404 flows
+
+### Changed
+- `X402MiddlewareOptions` now accepts optional `receiptStore` property
+
 ## [0.2.0] - 2026-03-01
 
 ### Added

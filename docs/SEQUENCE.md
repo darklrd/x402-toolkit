@@ -65,6 +65,24 @@ Client                        Server
   │◀── 402 { replay detected } ──│
 ```
 
+## Receipt retrieval (after successful payment)
+
+```
+Client                        Server
+  │                              │
+  │── GET /weather ─────────────▶│  → 402 challenge (nonce=Y)
+  │◀── 402 ──────────────────────│
+  │                              │
+  │── GET /weather ─────────────▶│  X-Payment-Proof: proof(nonce=Y)
+  │◀── 200 { weather data } ─────│  → receipt saved to receiptStore
+  │                              │
+  │── GET /x402/receipts/Y ─────▶│  → lookup nonce Y in receiptStore
+  │◀── 200 { receipt } ──────────│  { nonce, payer, amount, asset, ... }
+  │                              │
+  │── GET /x402/receipts/Z ─────▶│  → nonce Z not found
+  │◀── 404 { not found } ────────│
+```
+
 ## requestHash canonicalization
 
 ```

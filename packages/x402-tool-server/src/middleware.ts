@@ -25,6 +25,7 @@ import type {
   X402ChallengeBody,
   StoredResponse,
 } from './types.js';
+import type { ReceiptStore, Receipt } from './receipts.js';
 
 export interface X402MiddlewareOptions {
   /** Verifier instance — validates payment proofs */
@@ -36,6 +37,11 @@ export interface X402MiddlewareOptions {
    * Default: 300 (5 minutes).
    */
   defaultTtlSeconds?: number;
+  /**
+   * Optional receipt store — if provided, successful payments are recorded
+   * and a GET /x402/receipts/:nonce route is registered automatically.
+   */
+  receiptStore?: ReceiptStore;
 }
 
 // Extend FastifyRequest to carry raw body bytes captured in preParsing.
@@ -50,6 +56,20 @@ const x402Plugin: (options: X402MiddlewareOptions) => FastifyPluginAsync =
   fp(async function x402PluginImpl(fastify) {
     const idempotencyStore = options.idempotencyStore ?? new MemoryIdempotencyStore();
     const defaultTtl = options.defaultTtlSeconds ?? 300;
+    const receiptStore = options.receiptStore;
+
+    // ── Register receipt lookup route if store is provided ──────────────
+    if (receiptStore) {
+      fastify.get('/x402/receipts/:nonce', async (request, reply) => {
+        const { nonce } = request.params as { nonce: string };
+        const receipt = receiptStore.get(nonce);
+        if (!receipt) {
+          reply.code(404).send({ error: 'Receipt not found', nonce });
+          return;
+        }
+        return receipt;
+      });
+    }
 
     // In-memory nonce store for replay protection.
     // Nonces are stored until their expiresAt + a 60-second grace period.
@@ -176,6 +196,32 @@ const x402Plugin: (options: X402MiddlewareOptions) => FastifyPluginAsync =
       } catch {
         // Proof already passed verifier.verify() so JSON parse failure is a
         // corner case — we skip nonce tracking but allow the request through.
+      }
+
+      // ── Save receipt ────────────────────────────────────────────────────
+      if (receiptStore) {
+        try {
+          const decoded = Buffer.from(proofHeader, 'base64url').toString('utf8');
+          const proof = JSON.parse(decoded) as { nonce?: string; payer?: string; timestamp?: string };
+          if (proof.nonce) {
+            const url = new URL(request.url, 'http://localhost');
+            const receipt: Receipt = {
+              nonce: proof.nonce,
+              payer: proof.payer ?? 'unknown',
+              amount: pricing.price as string,
+              asset: pricing.asset as string,
+              network: (pricing.network as string | undefined) ?? 'mock',
+              recipient: pricing.recipient as string,
+              endpoint: url.pathname,
+              method: request.method,
+              requestHash,
+              paidAt: proof.timestamp ?? new Date().toISOString(),
+            };
+            receiptStore.save(receipt);
+          }
+        } catch {
+          // Non-critical — receipt saving failure should not block the response.
+        }
       }
 
       // ── Intercept response for idempotency storage ───────────────────────
