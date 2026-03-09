@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+  x402-demo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PAYMENT_MODE=mock
+    volumes:
+      - ./examples/.env.solana:/app/examples/.env.solana:ro
+    restart: unless-stopped
+
+  # Uncomment to run with Solana devnet payments:
+  # x402-demo-solana:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "3001:3000"
+  #   env_file:
+  #     - ./examples/.env.solana
+  #   environment:
+  #     - PAYMENT_MODE=solana
+  #     - SOLANA_CLUSTER=devnet
+  #   restart: unless-stopped
