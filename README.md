@@ -31,6 +31,12 @@ pnpm build
 pnpm dev       # starts the weather server + CLI demo
 ```
 
+### Docker quickstart
+
+```bash
+docker compose up --build   # starts the demo server on port 3000
+```
+
 You'll see:
 
 ```
