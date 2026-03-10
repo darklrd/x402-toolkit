@@ -5,7 +5,6 @@
 
 [![CI](https://github.com/darklrd/x402-toolkit/actions/workflows/ci.yml/badge.svg)](https://github.com/darklrd/x402-toolkit/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-82%20passing-brightgreen)](#commands)
 [![x402](https://img.shields.io/badge/protocol-x402-blue)](https://x402.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6)](https://www.typescriptlang.org)
 
