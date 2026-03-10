@@ -1,122 +1,82 @@
-# x402 Paywalled Agent Tools
+# x402-toolkit
 
-> Gate any HTTP tool endpoint behind a micropayment using the [HTTP 402](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402) Payment Required status — with automatic 402 → pay → retry handled by the client.
+> **The Fastify-native x402 payment toolkit for AI agents.**
+> Gate any HTTP endpoint behind a micropayment. Agents auto-handle 402 → pay → retry.
 
-Works **100% offline/locally** with the mock payer. No real funds, no wallet, no chain required in the default mode. Switch to **real Solana USDC payments** (devnet or mainnet) with a single env var.
-
-[![CI](https://github.com/your-org/x402-toolkit/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/x402-toolkit/actions/workflows/ci.yml)
+[![CI](https://github.com/darklrd/x402-toolkit/actions/workflows/ci.yml/badge.svg)](https://github.com/darklrd/x402-toolkit/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![x402](https://img.shields.io/badge/protocol-x402-blue)](https://x402.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6)](https://www.typescriptlang.org)
+
+```
+Agent                          Your Fastify API
+  │── GET /weather ───────────▶ │  no payment? → 402 challenge
+  │◀── 402 { challenge } ───────│
+  │    payer.pay(challenge)      │
+  │── GET /weather ───────────▶ │  X-Payment-Proof: <proof>
+  │◀── 200 { temp: 22°C } ──────│  ✅ verified + served
+```
+
+Works **100% offline** in mock mode. Switch to real **Solana USDC** with one env var.
 
 ---
 
-## What it is
+## Why x402-toolkit?
 
-`x402-toolkit` is a TypeScript monorepo with three packages:
+The [official coinbase/x402](https://github.com/coinbase/x402) supports Express, Hono, and Next.js.
+**x402-toolkit is the Fastify implementation** — plus extras the official SDK doesn't have:
+
+| Feature | coinbase/x402 | x402-toolkit |
+|---------|:---:|:---:|
+| Fastify middleware | ❌ | ✅ |
+| Mock mode (offline dev, zero config) | ❌ | ✅ |
+| Payment receipts + audit trail | ❌ | ✅ |
+| Idempotency protection | ❌ | ✅ |
+| Nonce replay protection | ✅ | ✅ |
+| Solana USDC (devnet + mainnet) | ✅ | ✅ |
+| Agent-friendly `createTool` wrapper | ❌ | ✅ |
+| requestHash binding | ✅ | ✅ |
+| Docker Compose quickstart | ❌ | ✅ |
+
+---
+
+## Packages
 
 | Package | Description |
 |---|---|
-| [`x402-tool-server`](packages/x402-tool-server) | Fastify middleware to price HTTP endpoints using x402 |
-| [`x402-agent-client`](packages/x402-agent-client) | Client that auto-handles 402 → pay → retry |
-| [`x402-adapters`](packages/x402-adapters) | Payer/verifier implementations (mock + Solana USDC) |
+| [`x402-tool-server`](packages/x402-tool-server) | Fastify plugin — gate routes behind x402 payments |
+| [`x402-agent-client`](packages/x402-agent-client) | Client — auto-handles 402 → pay → retry |
+| [`x402-adapters`](packages/x402-adapters) | Adapters — mock (offline) + Solana USDC |
 
 ---
 
-## 30-second quickstart (mock mode)
+## Quickstart (mock mode — no wallet needed)
 
 ```bash
-git clone https://github.com/your-org/x402-toolkit
-cd x402-toolkit
-pnpm install
-pnpm build
-pnpm dev       # starts the weather server + CLI demo
+git clone https://github.com/darklrd/x402-toolkit
+cd x402-toolkit && pnpm install && pnpm build
+pnpm dev
 ```
 
-### Docker quickstart
+Or with Docker:
 
 ```bash
-docker compose up --build   # starts the demo server on port 3000
+docker compose up --build
 ```
 
-You'll see:
-
+Output:
 ```
 → GET http://127.0.0.1:3000/weather?city=London
-  (no payment proof — expecting 402…)
-✅ Payment accepted — response:
-{ "city": "London", "temp": 15, "condition": "Cloudy", "humidity": 72, "unit": "celsius" }
+  (no payment — expecting 402…)
+✅ Payment accepted:
+{ "city": "London", "temp": 15, "condition": "Cloudy" }
 ```
 
 ---
 
-## Solana quickstart (real USDC)
+## Add a priced endpoint in ~10 lines
 
-Defaults to **devnet**. Set `SOLANA_CLUSTER=mainnet` for production (see [mainnet notes](#solana-mainnet) below).
-
-1. **Fund your wallet:**
-
-```bash
-# devnet — free test tokens
-solana airdrop 2 $(solana address) --url devnet   # SOL for fees
-# Get devnet USDC from https://faucet.circle.com
-```
-
-2. **Create the recipient's USDC token account** (required before receiving payments):
-
-```bash
-# devnet
-spl-token create-account 4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU \
-  --owner $(solana address) --url devnet
-```
-
-3. **Configure and run:**
-
-```bash
-cp examples/.env.solana.example examples/.env.solana
-# Edit examples/.env.solana — set RECIPIENT_WALLET and SOLANA_PRIVATE_KEY
-
-pnpm exec tsx scripts/setup-solana.ts   # verify balances + ATA readiness
-
-set -a && source examples/.env.solana && set +a && pnpm build && pnpm dev
-```
-
-Each request now sends a real SPL token transfer on Solana devnet and verifies it on-chain before serving the response (~500ms confirmation time).
-
-### Solana mainnet
-
-To use real USDC on mainnet, set `SOLANA_CLUSTER=mainnet` in your `.env.solana`. The adapter will automatically use the mainnet USDC mint (`EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`) and a mainnet RPC endpoint.
-
-```bash
-# mainnet — real funds required
-SOLANA_CLUSTER=mainnet
-SOLANA_RPC_URL=https://mainnet.helius-rpc.com/?api-key=<your-key>  # paid RPC recommended
-```
-
-**What changes for mainnet vs devnet:**
-
-| | Devnet | Mainnet |
-|---|---|---|
-| USDC mint | `4zMMC9srt5…` | `EPjFWdd5Au…` |
-| Funds | Free faucet | Real USDC from exchange |
-| RPC | Public devnet (free) | Paid provider recommended |
-| ATA creation | `--url devnet` | `--url mainnet-beta` |
-
-The USDC mint and default RPC URL are selected automatically based on `SOLANA_CLUSTER`. If constructing the adapters directly, pass `mintAddress` explicitly:
-
-```ts
-import { SolanaUSDCVerifier, USDC_MAINNET_MINT, DEFAULT_MAINNET_RPC_URL } from 'x402-adapters/solana';
-
-const verifier = new SolanaUSDCVerifier({
-  mintAddress: USDC_MAINNET_MINT,
-  rpcUrl: 'https://mainnet.helius-rpc.com/?api-key=<your-key>',
-  commitment: 'finalized',   // recommended for mainnet
-});
-```
-
----
-
-## Add a priced tool in ~10 lines
-
-**Server** (Fastify):
+**Server:**
 
 ```ts
 import Fastify from 'fastify';
@@ -130,24 +90,23 @@ app.route(pricedRoute({
   method: 'GET',
   url: '/my-tool',
   pricing: { price: '0.001', asset: 'USDC', network: 'mock', recipient: '0x…' },
-  handler: async (req) => ({ result: 'hello' }),
+  handler: async () => ({ result: 'hello' }),
 }));
 
 await app.listen({ port: 3000 });
 ```
 
-**Client**:
+**Agent (auto-pays):**
 
 ```ts
 import { x402Fetch } from 'x402-agent-client';
 import { MockPayer } from 'x402-adapters';
 
-const payer = new MockPayer();
-const res = await x402Fetch('http://localhost:3000/my-tool', {}, { payer });
+const res = await x402Fetch('http://localhost:3000/my-tool', {}, { payer: new MockPayer() });
 console.log(await res.json()); // { result: 'hello' }
 ```
 
-To use real Solana USDC, swap the adapter:
+**Switch to real Solana USDC** by swapping one import:
 
 ```ts
 import { SolanaUSDCVerifier } from 'x402-adapters/solana'; // server
@@ -156,25 +115,7 @@ import { SolanaUSDCPayer }    from 'x402-adapters/solana'; // client
 
 ---
 
-## Sequence diagram
-
-```
-Client                         Server
-  │── GET /my-tool ───────────▶ │  (no proof → issue 402 challenge)
-  │◀── 402 { x402: challenge } ─│
-  │
-  │  payer.pay(challenge) → PaymentProof
-  │
-  │── GET /my-tool ───────────▶ │  X-Payment-Proof: <base64url proof>
-  │                              │  verifier.verify(proof, requestHash)
-  │◀── 200 { result: 'hello' } ─│
-```
-
-See [docs/SEQUENCE.md](docs/SEQUENCE.md) for all flows (idempotency, replay, conflicts).
-
----
-
-## Agent-friendly tool wrapper
+## Agent tool wrapper (LangChain-compatible)
 
 ```ts
 import { createTool } from 'x402-agent-client';
@@ -182,7 +123,7 @@ import { MockPayer } from 'x402-adapters';
 
 const weatherTool = createTool({
   name: 'get_weather',
-  description: 'Fetch current weather for a city (costs 0.001 USDC)',
+  description: 'Fetch weather for a city (costs 0.001 USDC)',
   inputSchema: {
     type: 'object',
     properties: { city: { type: 'string' } },
@@ -194,116 +135,138 @@ const weatherTool = createTool({
 });
 
 const result = await weatherTool.invoke({ city: 'Tokyo' });
-console.log(result.data); // { city: 'Tokyo', temp: 26, ... }
+// { city: 'Tokyo', temp: 26, condition: 'Sunny' }
 ```
 
 ---
 
-## Security notes
+## Solana quickstart (real USDC)
+
+Defaults to **devnet**. Set `SOLANA_CLUSTER=mainnet` for production.
+
+```bash
+# 1. Fund devnet wallet
+solana airdrop 2 $(solana address) --url devnet
+# Get devnet USDC: https://faucet.circle.com
+
+# 2. Create recipient token account
+spl-token create-account 4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU \
+  --owner $(solana address) --url devnet
+
+# 3. Configure and run
+cp examples/.env.solana.example examples/.env.solana
+# Set RECIPIENT_WALLET and SOLANA_PRIVATE_KEY
+
+pnpm exec tsx scripts/setup-solana.ts   # verify balances
+set -a && source examples/.env.solana && set +a && pnpm dev
+```
+
+Each request sends a real SPL token transfer + on-chain memo (~500ms confirmation).
+
+### Mainnet
+
+```bash
+SOLANA_CLUSTER=mainnet
+SOLANA_RPC_URL=https://mainnet.helius-rpc.com/?api-key=<key>  # paid RPC recommended
+```
+
+| | Devnet | Mainnet |
+|---|---|---|
+| USDC mint | `4zMMC9srt5…` | `EPjFWdd5Au…` |
+| Funds | Free faucet | Real USDC |
+| RPC | Public (free) | Paid provider recommended |
+
+---
+
+## Security
 
 ### Replay protection
-Every 402 challenge includes a **unique nonce** (UUID). The server tracks used nonces in memory (until `expiresAt + 60s`). Replaying a captured proof with the same nonce returns 402.
-
-### Proof expiry
-Challenges expire after **300 seconds** (configurable via `ttlSeconds`). Proofs are rejected after expiry regardless of signature validity.
+Every challenge includes a unique UUID nonce. Used nonces are tracked until `expiresAt + 60s`. Replaying a proof returns 402.
 
 ### requestHash binding
-The proof is bound to the exact canonical request:
+Proof is bound to the exact request:
 ```
 SHA-256(METHOD + "\n" + PATHNAME + "\n" + CANONICAL_QUERY + "\n" + RAW_BODY)
 ```
 A proof for `GET /weather?city=Paris` cannot be used for `GET /weather?city=Tokyo`.
 
+### Proof expiry
+Challenges expire after 300s (configurable via `ttlSeconds`).
+
 ### Solana memo binding
-In Solana mode, every payment transaction includes a **Memo instruction** containing `nonce|requestHash`. The verifier checks this memo before accepting payment, ensuring a tx from a different request cannot be replayed here even if it reaches the same recipient.
+Every Solana payment tx includes `Memo("nonce|requestHash")` — a tx from a different request cannot be replayed even if it reaches the same recipient.
 
 ### Idempotency
-Pass an `Idempotency-Key` header to prevent double-charging on retries. The server returns a stored response if the same key + same requestHash is seen again (`X-Idempotent-Replay: true`). A conflicting key (same key, different request) returns 409.
+Pass `Idempotency-Key` to prevent double-charging on retries. Same key + same request → replays stored response (`X-Idempotent-Replay: true`). Same key + different request → 409.
 
-See [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) for the full threat analysis.
-
-### Receipts
-
-Enable the receipt store to record every successful payment for audit and verification:
+### Payment receipts
+Enable the receipt store for full audit trail:
 
 ```ts
 import { createX402Middleware, MemoryReceiptStore } from 'x402-tool-server';
 
 const receiptStore = new MemoryReceiptStore();
+app.register(createX402Middleware({ verifier, receiptStore }));
 
-app.register(createX402Middleware({
-  verifier: new MockVerifier(),
-  receiptStore,
-}));
+// Auto-registered: GET /x402/receipts/:nonce
+// → { nonce, payer, amount, asset, endpoint, requestHash, paidAt }
 ```
 
-This auto-registers `GET /x402/receipts/:nonce` — retrieve any payment receipt by its challenge nonce:
-
-```bash
-curl http://localhost:3000/x402/receipts/<nonce>
-# → { nonce, payer, amount, asset, network, recipient, endpoint, method, requestHash, paidAt }
-```
-
-Implement the `ReceiptStore` interface for persistent storage (database, Redis, etc.).
+See [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) for the full threat analysis.
 
 ---
 
-## Mock vs Solana USDC
+## Mock vs Solana
 
-| | Mock (default) | Solana devnet | Solana mainnet |
+| | Mock | Solana devnet | Solana mainnet |
 |---|---|---|---|
-| Proof | HMAC-SHA256 | On-chain SPL transfer + memo | On-chain SPL transfer + memo |
-| Funds | None | Free (faucet) | Real USDC |
+| Proof | HMAC-SHA256 | On-chain SPL + memo | On-chain SPL + memo |
+| Funds required | None | Free faucet | Real USDC |
 | Works offline | ✅ | ❌ | ❌ |
-| Confirmation time | ~0ms | ~500ms | ~500ms (`confirmed`) / ~13s (`finalized`) |
-| PAYMENT_MODE | default | `solana` | `solana` |
-| SOLANA_CLUSTER | — | `devnet` (default) | `mainnet` |
+| Confirmation | ~0ms | ~500ms | ~500ms–13s |
+| `PAYMENT_MODE` | `default` | `solana` | `solana` |
+| `SOLANA_CLUSTER` | — | `devnet` | `mainnet` |
 
 ---
 
 ## Commands
 
 ```bash
-pnpm install                    # install all dependencies
-pnpm build                      # compile all packages (required before running demos)
-pnpm dev                        # start demo server + run CLI demo (mock mode)
-pnpm test                       # run all 77 tests
-pnpm lint                       # lint all TypeScript
-pnpm eval                       # 50-call latency + success rate eval
+pnpm install          # install all dependencies
+pnpm build            # compile all packages
+pnpm dev              # start demo server + CLI agent (mock mode)
+pnpm test             # run all 82 tests
+pnpm lint             # lint TypeScript
+pnpm eval             # 50-call latency + success rate eval
 
-pnpm exec tsx scripts/setup-solana.ts   # check Solana balances + ATA readiness (devnet or mainnet)
+pnpm exec tsx scripts/setup-solana.ts  # check Solana balances + ATA readiness
 ```
 
 ---
 
-## Package structure
+## Repo structure
 
 ```
 packages/
-  x402-tool-server/    Fastify middleware + types (no adapter logic)
-  x402-agent-client/   Client fetch wrapper + createTool (no adapter logic)
+  x402-tool-server/    Fastify middleware + receipts + idempotency
+  x402-agent-client/   x402Fetch + createTool wrapper
   x402-adapters/
-    src/mock/          MockPayer, MockVerifier (HMAC-SHA256, offline)
-    src/solana/        SolanaUSDCPayer, SolanaUSDCVerifier (devnet + mainnet configurable)
+    src/mock/          MockPayer, MockVerifier (offline, zero config)
+    src/solana/        SolanaUSDCPayer, SolanaUSDCVerifier
 examples/
-  paid-weather-tool/   Fastify weather server (mock or solana via PAYMENT_MODE)
-  cli-agent-demo/      CLI demo: 402 → pay → retry + createTool
-  .env.solana.example  Env var template for Solana mode
-scripts/
-  setup-solana.ts      Check Solana balances + ATA readiness (devnet or mainnet)
+  paid-weather-tool/   Demo Fastify server
+  cli-agent-demo/      CLI: 402 → pay → retry
 docs/
-  SEQUENCE.md          Flow diagrams
+  SEQUENCE.md          Flow diagrams (happy path, idempotency, replay, receipts)
   THREAT_MODEL.md      Security analysis
-  DESIGN.md            Architectural decisions
-evals/
-  quick_eval.ts        50-call latency + success rate eval
+  DESIGN.md            Architecture decisions
 ```
 
 ---
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md). PRs welcome — especially new chain adapters and agent framework integrations.
 
 ## License
 
