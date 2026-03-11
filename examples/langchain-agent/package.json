@@ -1,0 +1,28 @@
+{
+  "name": "langchain-agent",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Example: LangChain ReAct agent using X402Tool for priced endpoints",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@langchain/core": ">=0.3.0",
+    "@langchain/langgraph": "^0.2.0",
+    "@langchain/openai": "^0.3.0",
+    "x402-adapters": "workspace:*",
+    "x402-langchain": "workspace:*",
+    "x402-tool-server": "workspace:*",
+    "zod": ">=3.22.0",
+    "zod-to-json-schema": ">=3.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.5.4"
+  }
+}

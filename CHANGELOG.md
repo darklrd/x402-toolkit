@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **x402-langchain** — LangChain `StructuredTool` adapter for x402 priced endpoints
+  - `X402Tool` class: wraps any x402 endpoint as a LangChain-compatible tool
+  - `createX402Tools()` factory for batch creation of multiple tools
+  - Hand-rolled Zod→JSON Schema conversion supporting `string`, `number`, `boolean`, `enum`, `array`, `object`, `optional`
+  - Peer deps: `@langchain/core >=0.3.0`, `zod >=3.22.0`
+  - 7 unit tests + 4 integration E2E tests
+- **examples/langchain-agent** — Working LangChain ReAct agent example with x402 tool calling
 - Receipt endpoint: `GET /x402/receipts/:nonce` — retrieve payment receipts for audit/verification
   - `MemoryReceiptStore` — in-memory store with configurable TTL and automatic expiry sweep
   - `ReceiptStore` interface for custom backends (database, Redis, etc.)
