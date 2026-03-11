@@ -20,7 +20,7 @@ The [Coinbase x402 spec](https://github.com/coinbase/x402) defines a 402 body fo
 | Payment header | `X-PAYMENT` | `X-Payment-Proof` | More descriptive |
 | Proof format | EIP-712 typed sig | base64url-encoded JSON | Avoids wallet deps in mock |
 
-These deviations are intentional for the MVP. The real adapter (`packages/x402-adapters/src/real/`) will follow the Coinbase spec exactly when implemented.
+These deviations are intentional for the current implementation. Full Coinbase spec alignment (including the `accepts` envelope and `X-PAYMENT` header) is tracked as a planned enhancement.
 
 ## requestHash Canonicalization
 
@@ -111,6 +111,11 @@ The API is intentionally minimal:
 - `MockVerifier` — HMAC verifier (default subpath `x402-adapters`)
 - `SolanaUSDCPayer` — real SPL token transfer payer (subpath `x402-adapters/solana`)
 - `SolanaUSDCVerifier` — on-chain tx verifier (subpath `x402-adapters/solana`)
+
+**LangChain** (`x402-langchain`):
+- `X402Tool` — `StructuredTool` subclass wrapping any x402 endpoint with Zod schema input
+- `createX402Tools(configs[])` — batch factory for multiple tools
+- `ToolException` — re-export of `@langchain/core` tool exception for error handling
 
 ## SolanaUSDCPayer / SolanaUSDCVerifier
 

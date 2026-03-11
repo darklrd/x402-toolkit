@@ -5,6 +5,8 @@ LangChain `StructuredTool` adapter for x402 priced endpoints. Wrap any x402 API 
 ## Install
 
 ```bash
+npm install x402-langchain @langchain/core zod
+# or
 pnpm add x402-langchain @langchain/core zod
 ```
 
