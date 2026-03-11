@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { z } from 'zod/v3';
-import { StructuredTool } from '@langchain/core/tools';
+import { isStructuredTool } from '@langchain/core/tools';
 import { X402Tool, createX402Tools } from 'x402-langchain';
 import type { X402ToolConfig } from 'x402-langchain';
 import type { PayerInterface, X402Challenge, RequestContext, PaymentProof } from 'x402-agent-client';
@@ -144,7 +144,7 @@ describe('X402Tool', () => {
     expect(tools[2]).toBeInstanceOf(X402Tool);
   });
 
-  it('X402Tool is instanceof StructuredTool', () => {
+  it('X402Tool satisfies LangChain StructuredTool interface', () => {
     vi.mocked(createTool).mockReturnValue({
       name: 'get_weather',
       description: 'Get current weather',
@@ -154,6 +154,6 @@ describe('X402Tool', () => {
 
     const tool = new X402Tool(makeConfig());
 
-    expect(tool).toBeInstanceOf(StructuredTool);
+    expect(isStructuredTool(tool)).toBe(true);
   });
 });

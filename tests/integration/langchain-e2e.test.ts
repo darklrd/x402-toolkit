@@ -3,7 +3,7 @@ import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import { createX402Middleware, pricedRoute } from 'x402-tool-server';
 import { MockPayer, MockVerifier } from 'x402-adapters';
-import { StructuredTool } from '@langchain/core/tools';
+import { isStructuredTool } from '@langchain/core/tools';
 import { z } from 'zod/v3';
 import { X402Tool, createX402Tools } from 'x402-langchain';
 import type { X402ToolConfig } from 'x402-langchain';
@@ -88,7 +88,7 @@ describe('LangChain E2E integration', () => {
     expect(data.condition).toBe('Sunny');
   });
 
-  it('X402Tool is instanceof StructuredTool', () => {
+  it('X402Tool satisfies LangChain StructuredTool interface', () => {
     const schema = z.object({ city: z.string() });
     const tool = new X402Tool({
       name: 'test_tool',
@@ -98,7 +98,7 @@ describe('LangChain E2E integration', () => {
       fetchOptions: { payer },
     });
 
-    expect(tool).toBeInstanceOf(StructuredTool);
+    expect(isStructuredTool(tool)).toBe(true);
   });
 
   it('X402Tool with wrong payer throws on invoke', async () => {
