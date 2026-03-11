@@ -24,6 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - `X402MiddlewareOptions` now accepts optional `receiptStore` property
 
+### Infrastructure
+- Added `Dockerfile` and `docker-compose.yml` for one-click demo deployment
+- Added `.github/ISSUE_TEMPLATE/` (bug report + feature request), `PULL_REQUEST_TEMPLATE.md`, and `FUNDING.yml`
+- Overhauled root `README.md`: comparison table vs coinbase/x402, improved badges, cleaner quickstart
+
 ## [0.2.0] - 2026-03-01
 
 ### Added

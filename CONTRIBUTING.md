@@ -5,7 +5,7 @@ Thank you for your interest in contributing to x402-toolkit!
 ## Setup
 
 ```bash
-git clone https://github.com/your-org/x402-toolkit
+git clone https://github.com/darklrd/x402-toolkit
 cd x402-toolkit
 pnpm install
 pnpm build
@@ -26,6 +26,7 @@ pnpm test
 | `packages/x402-tool-server` | Fastify middleware (no mock logic) |
 | `packages/x402-agent-client` | Client fetch wrapper + tool factory (no mock logic) |
 | `packages/x402-adapters` | Payer/verifier implementations: `src/mock/` (HMAC, offline), `src/solana/` (real on-chain USDC) |
+| `packages/x402-langchain` | LangChain `StructuredTool` adapter — wraps any x402 endpoint as a LangChain tool |
 
 ## Rules
 
