@@ -47,6 +47,7 @@ The [official coinbase/x402](https://github.com/coinbase/x402) supports Express,
 | [`x402-tool-server`](packages/x402-tool-server) | Fastify plugin — gate routes behind x402 payments |
 | [`x402-agent-client`](packages/x402-agent-client) | Client — auto-handles 402 → pay → retry |
 | [`x402-adapters`](packages/x402-adapters) | Adapters — mock (offline) + Solana USDC |
+| [`x402-langchain`](packages/x402-langchain) | LangChain `StructuredTool` adapter for x402 |
 
 ---
 
@@ -137,6 +138,36 @@ const weatherTool = createTool({
 const result = await weatherTool.invoke({ city: 'Tokyo' });
 // { city: 'Tokyo', temp: 26, condition: 'Sunny' }
 ```
+
+---
+
+## LangChain Agent Integration
+
+Use x402 tools directly in any LangChain agent:
+
+```ts
+import { X402Tool } from 'x402-langchain';
+import { ChatOpenAI } from '@langchain/openai';
+import { createReactAgent } from '@langchain/langgraph/prebuilt';
+import { MockPayer } from 'x402-adapters';
+import { z } from 'zod';
+
+const weatherTool = new X402Tool({
+  name: 'get_weather',
+  description: 'Get current weather for a city. Costs 0.001 USDC per call.',
+  schema: z.object({ city: z.string().describe('City name') }),
+  endpoint: 'http://localhost:3000/weather',
+  method: 'GET',
+  fetchOptions: { payer: new MockPayer() },
+});
+
+const agent = createReactAgent({ llm: new ChatOpenAI({ model: 'gpt-4o-mini' }), tools: [weatherTool] });
+const result = await agent.invoke({
+  messages: [{ role: 'user', content: 'What is the weather in Tokyo?' }],
+});
+```
+
+See [`examples/langchain-agent`](examples/langchain-agent) for a full working example.
 
 ---
 
