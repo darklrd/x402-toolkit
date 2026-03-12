@@ -12,14 +12,25 @@
       "types": "./dist/index.d.ts"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "clean": "rimraf dist *.tsbuildinfo",
     "typecheck": "tsc --noEmit"
   },
+  "peerDependencies": {
+    "openai": "^4.80.0"
+  },
+  "peerDependenciesMeta": {
+    "openai": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@types/node": "^20.14.0",
+    "openai": "^4.104.0",
     "rimraf": "^5.0.10",
     "typescript": "^5.5.4"
   }
