@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **x402-agent-client**: OpenAI adapter helpers — `toOpenAITool`, `toOpenAITools`, `parseToolCall`, `executeToolCall`, `serializeResult`
+- **examples/openai-agent** — full OpenAI function calling loop with x402 tool use; fallback mode when `OPENAI_API_KEY` not set
 - **x402-langchain** — LangChain `StructuredTool` adapter for x402 priced endpoints
   - `X402Tool` class: wraps any x402 endpoint as a LangChain-compatible tool
   - `createX402Tools()` factory for batch creation of multiple tools
