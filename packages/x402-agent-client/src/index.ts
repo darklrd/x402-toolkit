@@ -30,3 +30,12 @@ export type {
   ToolInvokeResult,
   JsonSchema,
 } from './types.js';
+
+export {
+  toOpenAITool,
+  toOpenAITools,
+  parseToolCall,
+  serializeResult,
+  executeToolCall,
+} from './openai.js';
+export type { ParsedToolCall } from './openai.js';

@@ -125,6 +125,31 @@ importers:
         specifier: ^5.5.4
         version: 5.9.3
 
+  examples/openai-agent:
+    dependencies:
+      fastify:
+        specifier: ^4.28.0
+        version: 4.29.1
+      openai:
+        specifier: ^4.80.0
+        version: 4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
+      x402-adapters:
+        specifier: workspace:*
+        version: link:../../packages/x402-adapters
+      x402-agent-client:
+        specifier: workspace:*
+        version: link:../../packages/x402-agent-client
+    devDependencies:
+      '@types/node':
+        specifier: ^20.14.0
+        version: 20.19.35
+      tsx:
+        specifier: ^4.0.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5.5.0
+        version: 5.9.3
+
   examples/paid-weather-tool:
     dependencies:
       fastify:
@@ -180,6 +205,9 @@ importers:
       '@types/node':
         specifier: ^20.14.0
         version: 20.19.35
+      openai:
+        specifier: ^4.104.0
+        version: 4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
       rimraf:
         specifier: ^5.0.10
         version: 5.0.10

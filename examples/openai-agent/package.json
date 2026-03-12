@@ -1,0 +1,21 @@
+{
+  "name": "openai-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "x402-agent-client": "workspace:*",
+    "x402-adapters": "workspace:*",
+    "fastify": "^4.28.0",
+    "openai": "^4.80.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0",
+    "typescript": "^5.5.0",
+    "@types/node": "^20.14.0"
+  }
+}
