@@ -4,6 +4,7 @@ import Hero from './components/Hero';
 import PackageCards from './components/PackageCards';
 import CodeSnippets from './components/CodeSnippets';
 import GettingStarted from './components/GettingStarted';
+import Demo from './components/Demo';
 import Footer from './components/Footer';
 
 export default function App() {
@@ -18,9 +19,7 @@ export default function App() {
         <PackageCards />
         <CodeSnippets />
         <GettingStarted />
-        <div id="demo" className="bg-slate-950 py-16 text-center">
-          <p className="text-slate-500">Live demo — connect wallet below (coming in next phase)</p>
-        </div>
+        <Demo />
         <Footer />
       </div>
     </WalletProvider>

@@ -3,6 +3,7 @@ import {
   PublicKey,
   Transaction,
   TransactionInstruction,
+  type VersionedTransaction,
 } from '@solana/web3.js';
 import {
   getAssociatedTokenAddressSync,
@@ -36,7 +37,7 @@ export interface RequestContext {
 
 interface WalletAdapter {
   publicKey: PublicKey | null;
-  signTransaction: <T extends Transaction>(tx: T) => Promise<T>;
+  signTransaction: (<T extends Transaction | VersionedTransaction>(tx: T) => Promise<T>) | undefined;
 }
 
 function priceToMicroUnits(price: string): bigint {
@@ -63,6 +64,7 @@ export class BrowserSolanaUSDCPayer {
   async pay(challenge: X402Challenge, _context: RequestContext): Promise<PaymentProof> {
     const pubkey = this.wallet.publicKey;
     if (!pubkey) throw new Error('Wallet not connected');
+    if (!this.wallet.signTransaction) throw new Error('Wallet does not support signTransaction');
 
     const { nonce, requestHash, expiresAt, version, price, recipient } = challenge;
     const amount = priceToMicroUnits(price);
