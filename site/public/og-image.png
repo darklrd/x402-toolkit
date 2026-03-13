@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#0f172a"/>
+  <rect x="50" y="50" width="1100" height="530" rx="30" fill="#1e1b4b" opacity="0.5"/>
+  <text x="600" y="280" text-anchor="middle" fill="#818cf8" font-size="72" font-family="monospace" font-weight="bold">x402</text>
+  <text x="600" y="360" text-anchor="middle" fill="#cbd5e1" font-size="32" font-family="sans-serif">HTTP 402 Micropayments for AI Agents</text>
+  <text x="600" y="420" text-anchor="middle" fill="#64748b" font-size="24" font-family="sans-serif">Pay-per-call tools · Solana USDC · Try it live</text>
+</svg>
