@@ -47,11 +47,10 @@ function priceToMicroUnits(price: string): bigint {
 }
 
 function createMemoInstruction(memo: string): TransactionInstruction {
-  const encoded = new TextEncoder().encode(memo);
   return new TransactionInstruction({
     keys: [],
     programId: MEMO_PROGRAM_ID,
-    data: Buffer.from(encoded),
+    data: new TextEncoder().encode(memo) as unknown as Buffer,
   });
 }
 

@@ -24,7 +24,7 @@ export default function Demo() {
   const payer = useMemo(() => {
     if (!wallet.publicKey || !wallet.signTransaction) return null;
     return new BrowserSolanaUSDCPayer(wallet, connection);
-  }, [wallet, connection]);
+  }, [wallet.publicKey, wallet.signTransaction, connection]);
 
   const handleToolSelect = useCallback((t: 'weather' | 'price') => {
     setTool(t);
@@ -32,7 +32,7 @@ export default function Demo() {
   }, []);
 
   const handleCall = useCallback(async () => {
-    if (!payer) return;
+    if (!payer || !DEMO_SERVER_URL) return;
 
     setSteps([]);
     setResult(null);
@@ -45,18 +45,17 @@ export default function Demo() {
     const url = `${DEMO_SERVER_URL}/${tool}?${param}=${encodeURIComponent(inputValue || (tool === 'weather' ? 'London' : 'BTC'))}`;
 
     const start = performance.now();
+    const localSteps: FlowStep[] = [];
 
     try {
       const onStep = (step: FlowStep) => {
-        setSteps((prev) => [...prev, step]);
+        localSteps.push(step);
+        setSteps([...localSteps]);
         if (step.type === 'success') {
           setResult(step.data);
         }
-        if (step.type === 'signing') {
-          const signingStep = steps.find((s) => s.type === '402');
-          if (signingStep && signingStep.type === '402') {
-            setSignature(null);
-          }
+        if (step.type === 'signed') {
+          setSignature(step.signature);
         }
       };
 
@@ -64,19 +63,28 @@ export default function Demo() {
 
       const elapsed = Math.round(performance.now() - start);
       setDurationMs(elapsed);
-
-      const lastStep = steps[steps.length - 1];
-      if (lastStep && lastStep.type === '402') {
-        setSignature(null);
-      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       setError(message);
-      setSteps((prev) => [...prev, { type: 'error', message }]);
+      localSteps.push({ type: 'error', message });
+      setSteps([...localSteps]);
     } finally {
       setLoading(false);
     }
-  }, [payer, tool, inputValue, steps]);
+  }, [payer, tool, inputValue]);
+
+  if (!DEMO_SERVER_URL) {
+    return (
+      <section className="bg-gradient-to-b from-slate-950 to-slate-900 py-16 sm:py-24" id="demo">
+        <div className="mx-auto max-w-2xl px-6 text-center">
+          <h2 className="text-3xl font-bold text-white">Live Demo</h2>
+          <p className="mt-4 text-sm text-slate-400">
+            Demo server not configured. Set <code className="text-slate-300">VITE_DEMO_SERVER_URL</code> to enable.
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="bg-gradient-to-b from-slate-950 to-slate-900 py-16 sm:py-24" id="demo">

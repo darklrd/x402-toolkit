@@ -8,7 +8,7 @@ export default defineConfig({
     outDir: 'dist',
   },
   define: {
-    'process.env': {},
+    'process.env.NODE_ENV': JSON.stringify('production'),
     global: 'globalThis',
   },
 });

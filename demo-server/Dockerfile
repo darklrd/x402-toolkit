@@ -4,7 +4,7 @@ WORKDIR /app
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY packages/ packages/
 COPY demo-server/ demo-server/
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --filter x402-demo-server...
 RUN pnpm -r --filter './packages/*' run build
 RUN pnpm --filter x402-demo-server run build
 

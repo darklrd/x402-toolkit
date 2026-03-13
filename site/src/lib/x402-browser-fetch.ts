@@ -4,6 +4,7 @@ export type FlowStep =
   | { type: 'request'; url: string }
   | { type: '402'; challenge: X402Challenge }
   | { type: 'signing' }
+  | { type: 'signed'; signature: string }
   | { type: 'retry' }
   | { type: 'success'; status: number; data: Record<string, unknown> }
   | { type: 'error'; message: string };
@@ -47,6 +48,7 @@ export async function x402BrowserFetch(
   onStep({ type: 'signing' });
 
   const proof = await payer.pay(body.x402, context);
+  onStep({ type: 'signed', signature: proof.signature });
   const proofHeader = encodeProofBase64Url(proof);
 
   onStep({ type: 'retry' });

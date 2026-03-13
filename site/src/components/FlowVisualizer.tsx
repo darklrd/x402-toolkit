@@ -10,6 +10,7 @@ const stepDefs: StepDef[] = [
   { key: 'request', icon: '→', label: 'Request' },
   { key: '402', icon: '←', label: '402' },
   { key: 'signing', icon: '⚡', label: 'Sign tx' },
+  { key: 'signed', icon: '✍', label: 'Signed' },
   { key: 'retry', icon: '→', label: 'Retry' },
   { key: 'success', icon: '✅', label: '200' },
 ];
@@ -23,7 +24,7 @@ function getStepStatus(stepKey: string, steps: FlowStep[]): StepStatus {
   if (stepKey === 'success' && hasError) return 'error';
   if (reachedTypes.has(stepKey as FlowStep['type'])) return 'done';
 
-  const order = ['request', '402', 'signing', 'retry', 'success'];
+  const order = ['request', '402', 'signing', 'signed', 'retry', 'success'];
   const stepIdx = order.indexOf(stepKey);
   const lastReachedIdx = Math.max(...order.map((k, i) => (reachedTypes.has(k as FlowStep['type']) ? i : -1)));
 
