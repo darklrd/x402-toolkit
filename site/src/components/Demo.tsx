@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { BrowserSolanaUSDCPayer } from '../lib/browser-payer';
 import { x402BrowserFetch, type FlowStep } from '../lib/x402-browser-fetch';
-import { DEMO_SERVER_URL } from '../lib/constants';
+import { DEMO_SERVER_URL, HAS_DEMO_SERVER_URL } from '../lib/constants';
 import ToolPicker from './ToolPicker';
 import FlowVisualizer from './FlowVisualizer';
 import ResultPanel from './ResultPanel';
@@ -21,6 +21,8 @@ export default function Demo() {
   const [durationMs, setDurationMs] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const normalizedDemoUrl = HAS_DEMO_SERVER_URL ? DEMO_SERVER_URL.replace(/\/+$/, '') : '';
+
   const payer = useMemo(() => {
     if (!wallet.publicKey || !wallet.signTransaction) return null;
     return new BrowserSolanaUSDCPayer(wallet, connection);
@@ -33,6 +35,10 @@ export default function Demo() {
 
   const handleCall = useCallback(async () => {
     if (!payer) return;
+    if (!normalizedDemoUrl) {
+      setError('Demo server URL is not configured.');
+      return;
+    }
 
     setSteps([]);
     setResult(null);
@@ -42,7 +48,9 @@ export default function Demo() {
     setLoading(true);
 
     const param = tool === 'weather' ? 'city' : 'symbol';
-    const url = `${DEMO_SERVER_URL}/${tool}?${param}=${encodeURIComponent(inputValue || (tool === 'weather' ? 'London' : 'BTC'))}`;
+    const url = `${normalizedDemoUrl}/${tool}?${param}=${encodeURIComponent(
+      inputValue || (tool === 'weather' ? 'London' : 'BTC'),
+    )}`;
 
     const start = performance.now();
 
@@ -76,7 +84,7 @@ export default function Demo() {
     } finally {
       setLoading(false);
     }
-  }, [payer, tool, inputValue, steps]);
+  }, [payer, tool, inputValue, steps, normalizedDemoUrl]);
 
   return (
     <section className="bg-gradient-to-b from-slate-950 to-slate-900 py-16 sm:py-24" id="demo">
@@ -96,16 +104,25 @@ export default function Demo() {
 
           {wallet.connected && <FaucetLink />}
 
+          {!normalizedDemoUrl && (
+            <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+              Set <span className="font-semibold">VITE_DEMO_SERVER_URL</span> in your environment to enable the live
+              demo.
+            </p>
+          )}
+
           <button
             onClick={handleCall}
-            disabled={!wallet.connected || loading}
+            disabled={!wallet.connected || loading || !normalizedDemoUrl}
             className="w-full rounded-lg bg-accent-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-accent-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {!wallet.connected
               ? 'Connect wallet first'
               : loading
                 ? 'Processing...'
-                : `Call ${tool === 'weather' ? 'Weather' : 'Price'} Tool (0.001 USDC)`}
+                : !normalizedDemoUrl
+                  ? 'Configure demo server URL'
+                  : `Call ${tool === 'weather' ? 'Weather' : 'Price'} Tool (0.001 USDC)`}
           </button>
 
           <FlowVisualizer steps={steps} />

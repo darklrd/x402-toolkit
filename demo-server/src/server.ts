@@ -7,9 +7,20 @@ import { weatherHandler, priceHandler } from './tools.js';
 const RECIPIENT = process.env.RECIPIENT_WALLET ?? '';
 const RPC_URL = process.env.SOLANA_RPC_URL ?? 'https://api.devnet.solana.com';
 const PORT = parseInt(process.env.PORT ?? '3402', 10);
+const CORS_ORIGINS = (process.env.CORS_ORIGINS ?? 'http://localhost:5173')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 if (!RECIPIENT) {
   console.error('RECIPIENT_WALLET env var is required');
+  process.exit(1);
+}
+
+try {
+  new URL(RPC_URL);
+} catch {
+  console.error(`Invalid SOLANA_RPC_URL: ${RPC_URL}`);
   process.exit(1);
 }
 
@@ -18,7 +29,7 @@ const verifier = new SolanaUSDCVerifier({ rpcUrl: RPC_URL });
 const fastify = Fastify({ logger: true });
 
 await fastify.register(cors, {
-  origin: ['https://darklrd.github.io', 'http://localhost:5173'],
+  origin: CORS_ORIGINS,
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'x-payment-proof', 'idempotency-key'],
   exposedHeaders: ['x-payment-proof'],
