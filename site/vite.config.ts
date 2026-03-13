@@ -11,4 +11,9 @@ export default defineConfig({
     'process.env.NODE_ENV': JSON.stringify('production'),
     global: 'globalThis',
   },
+  resolve: {
+    alias: {
+      buffer: 'buffer',
+    },
+  },
 });
