@@ -7,6 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![x402](https://img.shields.io/badge/protocol-x402-blue)](https://x402.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6)](https://www.typescriptlang.org)
+[![Playground](https://img.shields.io/badge/🚀_Live_Playground-darklrd.github.io-blue)](https://darklrd.github.io/x402-toolkit/)
 
 ```
 Agent                          Your Fastify API
