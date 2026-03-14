@@ -1,6 +1,6 @@
 {
   "name": "x402-langchain",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "LangChain StructuredTool adapter for x402 priced endpoints",
   "type": "module",
   "main": "./dist/index.js",

@@ -1,6 +1,6 @@
 {
   "name": "x402-adapters",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Mock (and future real) payer/verifier adapters for x402-toolkit",
   "license": "MIT",
   "type": "module",

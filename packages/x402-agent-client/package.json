@@ -1,6 +1,6 @@
 {
   "name": "@darklrd/x402-agent-client",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Client library that auto-handles HTTP 402 payment challenges",
   "license": "MIT",
   "type": "module",
