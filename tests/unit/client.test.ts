@@ -2,8 +2,8 @@
  * Unit tests — x402Fetch and createTool
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { x402Fetch, createTool } from 'x402-agent-client';
-import type { PayerInterface, X402Challenge, RequestContext, PaymentProof } from 'x402-agent-client';
+import { x402Fetch, createTool } from '@darklrd/x402-agent-client';
+import type { PayerInterface, X402Challenge, RequestContext, PaymentProof } from '@darklrd/x402-agent-client';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 

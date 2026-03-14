@@ -39,7 +39,7 @@
     "typescript": "^5.5.4",
     "vitest": "^2.0.5",
     "x402-adapters": "workspace:*",
-    "x402-agent-client": "workspace:*",
+    "@darklrd/x402-agent-client": "workspace:*",
     "x402-langchain": "workspace:*",
     "x402-tool-server": "workspace:*",
     "zod": "^4.3.6",

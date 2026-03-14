@@ -15,7 +15,7 @@
  *   SOLANA_PRIVATE_KEY   base58 or JSON-array private key (solana mode only)
  *   SOLANA_RPC_URL       override Solana RPC endpoint (solana mode only; recommended for mainnet)
  */
-import { x402Fetch, createTool } from 'x402-agent-client';
+import { x402Fetch, createTool } from '@darklrd/x402-agent-client';
 import { MockPayer } from 'x402-adapters';
 import { SolanaUSDCPayer, USDC_DEVNET_MINT, USDC_MAINNET_MINT, DEFAULT_RPC_URL, DEFAULT_MAINNET_RPC_URL } from 'x402-adapters/solana';
 

@@ -13,7 +13,7 @@
   "dependencies": {
     "tsx": "^4.21.0",
     "x402-adapters": "workspace:*",
-    "x402-agent-client": "workspace:*"
+    "@darklrd/x402-agent-client": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

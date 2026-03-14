@@ -7,7 +7,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import { createX402Middleware, pricedRoute } from 'x402-tool-server';
-import { x402Fetch, createTool } from 'x402-agent-client';
+import { x402Fetch, createTool } from '@darklrd/x402-agent-client';
 import { MockPayer, MockVerifier } from 'x402-adapters';
 
 const SECRET = 'e2e-secret';
@@ -185,7 +185,7 @@ describe('End-to-end integration', () => {
   it('nonce replay: reusing same proof returns 402', async () => {
     // Get a challenge first
     const challengeRes = await fetch(`${baseUrl}/weather?city=Vienna`);
-    const { x402 } = await challengeRes.json() as { x402: import('x402-agent-client').X402Challenge };
+    const { x402 } = await challengeRes.json() as { x402: import('@darklrd/x402-agent-client').X402Challenge };
 
     // Build a valid proof
     const proof = await payer.pay(x402, { url: `${baseUrl}/weather?city=Vienna`, method: 'GET' });
