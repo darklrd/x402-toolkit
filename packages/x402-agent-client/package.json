@@ -33,5 +33,26 @@
     "openai": "^4.104.0",
     "rimraf": "^5.0.10",
     "typescript": "^5.5.4"
-  }
+  },
+  "author": "Shashwat Srivastava <shashwat@iflychat.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/darklrd/x402-toolkit.git",
+    "directory": "packages/x402-agent-client"
+  },
+  "homepage": "https://github.com/darklrd/x402-toolkit#readme",
+  "bugs": {
+    "url": "https://github.com/darklrd/x402-toolkit/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "x402",
+    "http-402",
+    "payment",
+    "ai-agent",
+    "client",
+    "micropayment"
+  ]
 }

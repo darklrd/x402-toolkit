@@ -23,5 +23,31 @@
   },
   "dependencies": {
     "x402-agent-client": "workspace:*"
-  }
+  },
+  "author": "Shashwat Srivastava <shashwat@iflychat.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/darklrd/x402-toolkit.git",
+    "directory": "packages/x402-langchain"
+  },
+  "homepage": "https://github.com/darklrd/x402-toolkit#readme",
+  "bugs": {
+    "url": "https://github.com/darklrd/x402-toolkit/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "x402",
+    "http-402",
+    "payment",
+    "langchain",
+    "ai-agent",
+    "tool",
+    "micropayment"
+  ]
 }
