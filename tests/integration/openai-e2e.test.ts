@@ -3,8 +3,8 @@ import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import { createX402Middleware, pricedRoute } from 'x402-tool-server';
 import { MockPayer, MockVerifier } from 'x402-adapters';
-import { createTool, executeToolCall } from 'x402-agent-client';
-import type { Tool } from 'x402-agent-client';
+import { createTool, executeToolCall } from '@darklrd/x402-agent-client';
+import type { Tool } from '@darklrd/x402-agent-client';
 
 const SECRET = 'openai-e2e-secret';
 const PRICING = {

@@ -8,7 +8,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "x402-agent-client": "workspace:*",
+    "@darklrd/x402-agent-client": "workspace:*",
     "x402-adapters": "workspace:*",
     "fastify": "^4.28.0",
     "openai": "^4.80.0"

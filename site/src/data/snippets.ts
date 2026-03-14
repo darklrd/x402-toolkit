@@ -14,7 +14,7 @@ app.route(pricedRoute({
   handler: async (req, reply) => reply.send({ temp: 22 }),
 }));`;
 
-export const clientSnippet = `import { x402Fetch } from 'x402-agent-client';
+export const clientSnippet = `import { x402Fetch } from '@darklrd/x402-agent-client';
 import { SolanaUSDCPayer } from 'x402-adapters/solana';
 
 const payer = new SolanaUSDCPayer({ keypair, rpcUrl: '...' });
@@ -34,7 +34,7 @@ const tool = new X402Tool({
 
 const result = await tool.invoke({ city: 'London' });`;
 
-export const openaiSnippet = `import { createX402Tools } from 'x402-agent-client/openai';
+export const openaiSnippet = `import { createX402Tools } from '@darklrd/x402-agent-client/openai';
 import { SolanaUSDCPayer } from 'x402-adapters/solana';
 
 const payer = new SolanaUSDCPayer({ keypair, rpcUrl: '...' });

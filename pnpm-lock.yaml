@@ -8,9 +8,12 @@ importers:
 
   .:
     devDependencies:
+      '@darklrd/x402-agent-client':
+        specifier: workspace:*
+        version: link:packages/x402-agent-client
       '@langchain/core':
         specifier: ^1.1.31
-        version: 1.1.31(openai@4.104.0(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6))
+        version: 1.1.31(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6))
       '@solana/spl-token':
         specifier: ^0.4.14
         version: 0.4.14(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6))(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@6.0.6)
@@ -65,9 +68,6 @@ importers:
       x402-adapters:
         specifier: workspace:*
         version: link:packages/x402-adapters
-      x402-agent-client:
-        specifier: workspace:*
-        version: link:packages/x402-agent-client
       x402-langchain:
         specifier: workspace:*
         version: link:packages/x402-langchain
@@ -114,15 +114,15 @@ importers:
 
   examples/cli-agent-demo:
     dependencies:
+      '@darklrd/x402-agent-client':
+        specifier: workspace:*
+        version: link:../../packages/x402-agent-client
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
       x402-adapters:
         specifier: workspace:*
         version: link:../../packages/x402-adapters
-      x402-agent-client:
-        specifier: workspace:*
-        version: link:../../packages/x402-agent-client
     devDependencies:
       '@types/node':
         specifier: ^20.14.0
@@ -173,6 +173,9 @@ importers:
 
   examples/openai-agent:
     dependencies:
+      '@darklrd/x402-agent-client':
+        specifier: workspace:*
+        version: link:../../packages/x402-agent-client
       fastify:
         specifier: ^4.28.0
         version: 4.29.1
@@ -182,9 +185,6 @@ importers:
       x402-adapters:
         specifier: workspace:*
         version: link:../../packages/x402-adapters
-      x402-agent-client:
-        specifier: workspace:*
-        version: link:../../packages/x402-agent-client
     devDependencies:
       '@types/node':
         specifier: ^20.14.0
@@ -263,12 +263,12 @@ importers:
 
   packages/x402-langchain:
     dependencies:
+      '@darklrd/x402-agent-client':
+        specifier: workspace:*
+        version: link:../x402-agent-client
       '@langchain/core':
         specifier: '>=0.3.0'
         version: 1.1.31(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6))
-      x402-agent-client:
-        specifier: workspace:*
-        version: link:../x402-agent-client
       zod:
         specifier: '>=3.22.0'
         version: 4.3.6
@@ -6917,25 +6917,6 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@langchain/core@1.1.31(openai@4.104.0(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6))':
-    dependencies:
-      '@cfworker/json-schema': 4.1.1
-      '@standard-schema/spec': 1.1.0
-      ansi-styles: 5.2.0
-      camelcase: 6.3.0
-      decamelize: 1.2.0
-      js-tiktoken: 1.0.21
-      langsmith: 0.5.9(openai@4.104.0(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6))
-      mustache: 4.2.0
-      p-queue: 6.6.2
-      uuid: 11.1.0
-      zod: 4.3.6
-    transitivePeerDependencies:
-      - '@opentelemetry/api'
-      - '@opentelemetry/exporter-trace-otlp-proto'
-      - '@opentelemetry/sdk-trace-base'
-      - openai
-
   '@langchain/core@1.1.31(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6))':
     dependencies:
       '@cfworker/json-schema': 4.1.1
@@ -11625,17 +11606,6 @@ snapshots:
 
   keyvaluestorage-interface@1.0.0: {}
 
-  langsmith@0.5.9(openai@4.104.0(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)):
-    dependencies:
-      '@types/uuid': 10.0.0
-      chalk: 5.6.2
-      console-table-printer: 2.15.0
-      p-queue: 6.6.2
-      semver: 7.7.4
-      uuid: 10.0.0
-    optionalDependencies:
-      openai: 4.104.0(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
-
   langsmith@0.5.9(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)):
     dependencies:
       '@types/uuid': 10.0.0
@@ -12080,22 +12050,6 @@ snapshots:
     dependencies:
       is-docker: 2.2.1
       is-wsl: 2.2.0
-
-  openai@4.104.0(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6):
-    dependencies:
-      '@types/node': 18.19.130
-      '@types/node-fetch': 2.6.13
-      abort-controller: 3.0.0
-      agentkeepalive: 4.6.0
-      form-data-encoder: 1.7.2
-      formdata-node: 4.4.1
-      node-fetch: 2.7.0
-    optionalDependencies:
-      ws: 7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6)
-      zod: 4.3.6
-    transitivePeerDependencies:
-      - encoding
-    optional: true
 
   openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76):
     dependencies:

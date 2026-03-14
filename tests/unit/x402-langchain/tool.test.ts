@@ -3,17 +3,17 @@ import { z } from 'zod/v3';
 import { isStructuredTool } from '@langchain/core/tools';
 import { X402Tool, createX402Tools } from 'x402-langchain';
 import type { X402ToolConfig } from 'x402-langchain';
-import type { PayerInterface, X402Challenge, RequestContext, PaymentProof } from 'x402-agent-client';
+import type { PayerInterface, X402Challenge, RequestContext, PaymentProof } from '@darklrd/x402-agent-client';
 
-vi.mock('x402-agent-client', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('x402-agent-client')>();
+vi.mock('@darklrd/x402-agent-client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@darklrd/x402-agent-client')>();
   return {
     ...actual,
     createTool: vi.fn(),
   };
 });
 
-import { createTool } from 'x402-agent-client';
+import { createTool } from '@darklrd/x402-agent-client';
 
 class MockPayer implements PayerInterface {
   async pay(_challenge: X402Challenge, _context: RequestContext): Promise<PaymentProof> {

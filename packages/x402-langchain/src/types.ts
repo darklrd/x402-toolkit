@@ -1,4 +1,4 @@
-import type { X402FetchOptions } from 'x402-agent-client';
+import type { X402FetchOptions } from '@darklrd/x402-agent-client';
 import type { ZodObject, ZodRawShape } from 'zod/v3';
 
 export interface X402ToolConfig<T extends ZodRawShape = ZodRawShape> {

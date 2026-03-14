@@ -8,7 +8,7 @@ import {
   toOpenAITools,
   parseToolCall,
   executeToolCall,
-} from 'x402-agent-client';
+} from '@darklrd/x402-agent-client';
 
 const SECRET = 'openai-agent-secret';
 const PRICING = {

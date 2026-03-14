@@ -1,5 +1,5 @@
 import { StructuredTool, ToolInputParsingException } from '@langchain/core/tools';
-import { createTool } from 'x402-agent-client';
+import { createTool } from '@darklrd/x402-agent-client';
 import {
   ZodObject,
   ZodString,
@@ -13,7 +13,7 @@ import {
   type z,
 } from 'zod/v3';
 import type { X402ToolConfig } from './types.js';
-import type { JsonSchema } from 'x402-agent-client';
+import type { JsonSchema } from '@darklrd/x402-agent-client';
 
 function zodFieldToJsonSchema(field: ZodTypeAny): JsonSchema {
   const desc = (field as { description?: string }).description;

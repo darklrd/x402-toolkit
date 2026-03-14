@@ -4,8 +4,8 @@ import {
   toOpenAITools,
   parseToolCall,
   serializeResult,
-} from 'x402-agent-client';
-import type { Tool } from 'x402-agent-client';
+} from '@darklrd/x402-agent-client';
+import type { Tool } from '@darklrd/x402-agent-client';
 import type { ChatCompletionMessageToolCall } from 'openai/resources/chat/completions.js';
 
 const mockTool: Tool = {

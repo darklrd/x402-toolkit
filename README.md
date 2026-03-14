@@ -46,7 +46,7 @@ The [official coinbase/x402](https://github.com/coinbase/x402) supports Express,
 | Package | Description |
 |---|---|
 | [`x402-tool-server`](packages/x402-tool-server) | Fastify plugin — gate routes behind x402 payments |
-| [`x402-agent-client`](packages/x402-agent-client) | Client — auto-handles 402 → pay → retry |
+| [`@darklrd/x402-agent-client`](packages/x402-agent-client) | Client — auto-handles 402 → pay → retry |
 | [`x402-adapters`](packages/x402-adapters) | Adapters — mock (offline) + Solana USDC |
 | [`x402-langchain`](packages/x402-langchain) | LangChain `StructuredTool` adapter for x402 |
 
@@ -101,7 +101,7 @@ await app.listen({ port: 3000 });
 **Agent (auto-pays):**
 
 ```ts
-import { x402Fetch } from 'x402-agent-client';
+import { x402Fetch } from '@darklrd/x402-agent-client';
 import { MockPayer } from 'x402-adapters';
 
 const res = await x402Fetch('http://localhost:3000/my-tool', {}, { payer: new MockPayer() });
@@ -120,7 +120,7 @@ import { SolanaUSDCPayer }    from 'x402-adapters/solana'; // client
 ## Agent tool wrapper (LangChain-compatible)
 
 ```ts
-import { createTool } from 'x402-agent-client';
+import { createTool } from '@darklrd/x402-agent-client';
 import { MockPayer } from 'x402-adapters';
 
 const weatherTool = createTool({
@@ -281,7 +281,7 @@ pnpm exec tsx scripts/setup-solana.ts  # check Solana balances + ATA readiness
 ```
 packages/
   x402-tool-server/    Fastify middleware + receipts + idempotency
-  x402-agent-client/   x402Fetch + createTool wrapper
+  @darklrd/x402-agent-client/   x402Fetch + createTool wrapper
   x402-adapters/
     src/mock/          MockPayer, MockVerifier (offline, zero config)
     src/solana/        SolanaUSDCPayer, SolanaUSDCVerifier

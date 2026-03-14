@@ -7,7 +7,7 @@ import type { FastifyInstance } from 'fastify';
 import { createX402Middleware, pricedRoute, MemoryReceiptStore } from 'x402-tool-server';
 import { MemoryReceiptStore as ReceiptStoreClass } from 'x402-tool-server';
 import { MockVerifier, MockPayer } from 'x402-adapters';
-import { x402Fetch } from 'x402-agent-client';
+import { x402Fetch } from '@darklrd/x402-agent-client';
 
 const PRICING = {
   price: '0.001',

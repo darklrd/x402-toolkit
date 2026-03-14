@@ -31,5 +31,27 @@
   },
   "dependencies": {
     "fastify-plugin": "^5.1.0"
-  }
+  },
+  "author": "Shashwat Srivastava <shashwat@iflychat.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/darklrd/x402-toolkit.git",
+    "directory": "packages/x402-tool-server"
+  },
+  "homepage": "https://github.com/darklrd/x402-toolkit#readme",
+  "bugs": {
+    "url": "https://github.com/darklrd/x402-toolkit/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "x402",
+    "http-402",
+    "payment",
+    "fastify",
+    "middleware",
+    "micropayment",
+    "solana"
+  ]
 }
