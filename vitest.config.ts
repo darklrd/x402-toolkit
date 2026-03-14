@@ -12,6 +12,11 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['tests/**/*.test.ts'],
+    exclude: [
+      ...(parseInt(process.versions.node.split('.')[0], 10) < 20
+        ? ['tests/unit/architecture-flow.test.ts']
+        : []),
+    ],
     environmentMatchGlobs: [
       ['tests/unit/architecture-flow.test.ts', 'jsdom'],
     ],
