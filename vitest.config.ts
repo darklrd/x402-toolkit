@@ -1,10 +1,20 @@
 import { defineConfig } from 'vitest/config';
+import path from 'path';
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      react: path.resolve(__dirname, 'site/node_modules/react'),
+      'react-dom': path.resolve(__dirname, 'site/node_modules/react-dom'),
+    },
+  },
   test: {
     globals: true,
     environment: 'node',
     include: ['tests/**/*.test.ts'],
+    environmentMatchGlobs: [
+      ['tests/unit/architecture-flow.test.ts', 'jsdom'],
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
