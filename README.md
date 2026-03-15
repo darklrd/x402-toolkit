@@ -38,6 +38,7 @@ The [official coinbase/x402](https://github.com/coinbase/x402) supports Express,
 | Agent-friendly `createTool` wrapper | ❌ | ✅ |
 | requestHash binding | ✅ | ✅ |
 | Docker Compose quickstart | ❌ | ✅ |
+| Built-in rate limiting | ❌ | ✅ |
 
 ---
 
@@ -244,6 +245,21 @@ app.register(createX402Middleware({ verifier, receiptStore }));
 // → { nonce, payer, amount, asset, endpoint, requestHash, paidAt }
 ```
 
+### Rate limiting
+Protect your endpoints from abuse with the built-in rate limiter:
+
+```ts
+import { rateLimitMiddleware } from 'x402-tool-server';
+
+app.register(rateLimitMiddleware, {
+  maxRequests: 100,
+  windowMs: 60_000,
+  keyExtractor: (req) => req.ip, // default — customize per API key, header, etc.
+});
+```
+
+Rate limiting runs before the payment gate — abusive callers are blocked before burning verifier resources. Returns `429 Too Many Requests` with a `Retry-After` header.
+
 See [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) for the full threat analysis.
 
 ---
@@ -267,7 +283,7 @@ See [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) for the full threat analysis.
 pnpm install          # install all dependencies
 pnpm build            # compile all packages
 pnpm dev              # start demo server + CLI agent (mock mode)
-pnpm test             # run all 82 tests
+pnpm test             # run all tests
 pnpm lint             # lint TypeScript
 pnpm eval             # 50-call latency + success rate eval
 
