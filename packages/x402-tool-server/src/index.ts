@@ -46,3 +46,6 @@ export type {
   IdempotencyStore,
   StoredResponse,
 } from './types.js';
+
+export { rateLimitMiddleware } from './rate-limit.js';
+export type { RateLimitOptions } from './rate-limit.js';
