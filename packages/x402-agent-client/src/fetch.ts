@@ -70,9 +70,20 @@ export async function x402Fetch(
     }
 
     const { x402: challenge } = challengeBody;
+    const { budget } = x402Options;
 
-    // Ask the payer to generate a proof.
-    const proof = await payer.pay(challenge, context);
+    if (budget) {
+      budget.reserve(challenge.price);
+    }
+
+    let proof: PaymentProof;
+    try {
+      proof = await payer.pay(challenge, context);
+    } catch (err) {
+      if (budget) budget.release(challenge.price);
+      throw err;
+    }
+
     const proofHeader = encodeProof(proof);
 
     // Retry the request with the payment proof.

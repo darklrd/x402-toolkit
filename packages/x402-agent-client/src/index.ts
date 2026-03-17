@@ -18,6 +18,8 @@
 export { x402Fetch } from './fetch.js';
 export { createTool } from './tool.js';
 export type { Tool } from './tool.js';
+export { BudgetTracker, BudgetExceededError } from './budget.js';
+export type { BudgetTrackerOptions } from './budget.js';
 
 export type {
   PayerInterface,
