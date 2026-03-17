@@ -54,6 +54,8 @@ export interface PayerInterface {
 
 // ─── x402Fetch options ────────────────────────────────────────────────────────
 
+import type { BudgetTracker } from './budget.js';
+
 export interface X402FetchOptions {
   /** Payer implementation (e.g. MockPayer) */
   payer: PayerInterface;
@@ -62,6 +64,8 @@ export interface X402FetchOptions {
    * Default: 1 (pay once, then retry once; do not loop forever).
    */
   maxRetries?: number;
+  /** Optional spend budget tracker */
+  budget?: BudgetTracker;
 }
 
 // ─── createTool options ───────────────────────────────────────────────────────
