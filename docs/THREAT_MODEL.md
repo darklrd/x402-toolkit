@@ -101,8 +101,16 @@
 
 ---
 
+## Agent-Side Threats
+
+| Threat | Impact | Mitigation |
+|---|---|---|
+| Runaway agent spend | Agent makes unlimited paid API calls, draining funds | `BudgetTracker` caps cumulative spend; `BudgetExceededError` thrown before payment |
+| Concurrent overspend | Parallel fetches both pass budget check before either pays | Optimistic reservation: `reserve()` atomically increments before `payer.pay()`; `release()` rolls back on failure |
+
+---
+
 ## Out of Scope (MVP)
 
-- Rate limiting
 - Proof confidentiality (TLS assumed in production)
 - Multi-tenant nonce stores (single-process in MVP; use Redis for multi-node)

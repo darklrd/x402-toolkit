@@ -47,11 +47,30 @@ const tools = toOpenAITools(myToolDefinitions);
 const result = await executeToolCall(toolCall, myToolDefinitions);
 ```
 
+### Spend Budgets
+
+Cap agent spending to prevent runaway costs:
+
+```ts
+import { x402Fetch, BudgetTracker } from '@darklrd/x402-agent-client';
+import { MockPayer } from 'x402-adapters';
+
+const budget = new BudgetTracker({ maxSpend: "0.05" });
+const payer = new MockPayer();
+
+await x402Fetch('http://api.example.com/weather', {}, { payer, budget });
+// budget.spent === "0.001", budget.remaining === "0.049"
+
+// Throws BudgetExceededError when limit is reached — no money leaves
+budget.reset(); // start a new session
+```
+
 ## Features
 
 - Drop-in `fetch` replacement with automatic 402 handling
 - Structured tool wrapper for agent frameworks
 - OpenAI function calling adapter
+- Agent spend budgets with `BudgetTracker`
 - Pluggable payer interface (mock or real Solana USDC)
 
 ## Links

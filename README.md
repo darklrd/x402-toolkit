@@ -39,6 +39,7 @@ The [official coinbase/x402](https://github.com/coinbase/x402) supports Express,
 | requestHash binding | ✅ | ✅ |
 | Docker Compose quickstart | ❌ | ✅ |
 | Built-in rate limiting | ❌ | ✅ |
+| Agent spend budgets | ❌ | ✅ |
 
 ---
 
@@ -259,6 +260,23 @@ app.register(rateLimitMiddleware, {
 ```
 
 Rate limiting runs before the payment gate — abusive callers are blocked before burning verifier resources. Returns `429 Too Many Requests` with a `Retry-After` header.
+
+### Agent spend budgets
+Cap how much an agent can spend per session:
+
+```ts
+import { x402Fetch, BudgetTracker } from '@darklrd/x402-agent-client';
+
+const budget = new BudgetTracker({ maxSpend: "0.05" });
+
+// Shared across all calls — throws BudgetExceededError when limit is reached
+const res = await x402Fetch(url, {}, { payer, budget });
+
+console.log(budget.spent);     // "0.001"
+console.log(budget.remaining); // "0.049"
+```
+
+Budget is checked **before** payment — no money leaves if the limit is exceeded. Works with `x402Fetch`, `createTool`, and shared across multiple tools.
 
 See [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) for the full threat analysis.
 
