@@ -19,6 +19,9 @@ export default defineConfig({
     ],
     environmentMatchGlobs: [
       ['tests/unit/architecture-flow.test.ts', 'jsdom'],
+      ['tests/unit/step-detail.test.ts', 'jsdom'],
+      ['tests/unit/flow-step-row.test.ts', 'jsdom'],
+      ['tests/unit/flow-inspector.test.ts', 'jsdom'],
     ],
     coverage: {
       provider: 'v8',
