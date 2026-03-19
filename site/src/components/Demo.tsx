@@ -1,10 +1,11 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { BrowserSolanaUSDCPayer } from '../lib/browser-payer';
 import { x402BrowserFetch, type FlowStep } from '../lib/x402-browser-fetch';
 import { DEMO_SERVER_URL } from '../lib/constants';
+import { enrichFlowStep, type EnrichedFlowStep } from '../lib/flow-types';
 import ToolPicker from './ToolPicker';
-import FlowVisualizer from './FlowVisualizer';
+import FlowInspector from './FlowInspector';
 import ResultPanel from './ResultPanel';
 import FaucetLink from './FaucetLink';
 
@@ -14,7 +15,8 @@ export default function Demo() {
 
   const [tool, setTool] = useState<'weather' | 'price'>('weather');
   const [inputValue, setInputValue] = useState('London');
-  const [steps, setSteps] = useState<FlowStep[]>([]);
+  const [steps, setSteps] = useState<EnrichedFlowStep[]>([]);
+  const proofHeaderRef = useRef<string | null>(null);
   const [result, setResult] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [signature, setSignature] = useState<string | null>(null);
@@ -45,11 +47,17 @@ export default function Demo() {
     const url = `${DEMO_SERVER_URL}/${tool}?${param}=${encodeURIComponent(inputValue || (tool === 'weather' ? 'London' : 'BTC'))}`;
 
     const start = performance.now();
-    const localSteps: FlowStep[] = [];
+    const localSteps: EnrichedFlowStep[] = [];
+    let stepId = 0;
+    proofHeaderRef.current = null;
 
     try {
       const onStep = (step: FlowStep) => {
-        localSteps.push(step);
+        if (step.type === 'signed') {
+          proofHeaderRef.current = step.signature;
+        }
+        const enriched = enrichFlowStep(step, stepId++, start, url, proofHeaderRef.current);
+        localSteps.push(enriched);
         setSteps([...localSteps]);
         if (step.type === 'success') {
           setResult(step.data);
@@ -66,7 +74,8 @@ export default function Demo() {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       setError(message);
-      localSteps.push({ type: 'error', message });
+      const enriched = enrichFlowStep({ type: 'error', message }, stepId++, start, url, null);
+      localSteps.push(enriched);
       setSteps([...localSteps]);
     } finally {
       setLoading(false);
@@ -116,7 +125,7 @@ export default function Demo() {
                 : `Call ${tool === 'weather' ? 'Weather' : 'Price'} Tool (0.001 USDC)`}
           </button>
 
-          <FlowVisualizer steps={steps} />
+          <FlowInspector steps={steps} />
           <ResultPanel data={result} error={error} signature={signature} durationMs={durationMs} />
         </div>
       </div>
