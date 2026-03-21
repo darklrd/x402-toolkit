@@ -98,13 +98,16 @@ The API is intentionally minimal:
 - `createX402Middleware(options)` — Fastify plugin
 - `pricedRoute(options)` — route factory
 - `pricedHandler(pricing)` — shorthand options factory
+- `rateLimitMiddleware` — rate limiting plugin
+- `openApiPlugin` — OpenAPI 3.0 spec auto-generation from priced routes
 - `computeRequestHash(...)` — utility (useful for tests)
-- Types: `X402Challenge`, `PricingConfig`, `VerifierInterface`, `IdempotencyStore`
+- Types: `X402Challenge`, `PricingConfig`, `VerifierInterface`, `IdempotencyStore`, `RateLimitOptions`, `OpenApiOptions`
 
-**Client** (`x402-agent-client`):
+**Client** (`@darklrd/x402-agent-client`):
 - `x402Fetch(url, init, options)` — fetch wrapper
 - `createTool(config)` — agent tool factory
-- Types: `PayerInterface`, `RequestContext`, `PaymentProof`, `X402FetchOptions`, `ToolConfig`
+- `BudgetTracker` — agent spend budget enforcement
+- Types: `PayerInterface`, `RequestContext`, `PaymentProof`, `X402FetchOptions`, `ToolConfig`, `BudgetTrackerOptions`
 
 **Adapters** (`x402-adapters`):
 - `MockPayer` — HMAC payer (default subpath `x402-adapters`)

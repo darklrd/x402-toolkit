@@ -34,6 +34,22 @@ app.get('/weather', {
 app.listen({ port: 3000 });
 ```
 
+### OpenAPI Spec
+
+Auto-generate an OpenAPI 3.0 spec from your priced routes:
+
+```ts
+import { openApiPlugin } from 'x402-tool-server';
+
+app.register(openApiPlugin, {
+  title: 'My Paid API',
+  version: '1.0.0',
+  servers: [{ url: 'https://api.example.com' }],
+});
+
+// GET /x402/openapi.json → full Swagger spec with x-x402-* pricing extensions
+```
+
 ## Features
 
 - Fastify-native middleware (the only x402 implementation for Fastify)
@@ -42,6 +58,8 @@ app.listen({ port: 3000 });
 - Request hash binding prevents proof replay across endpoints
 - Nonce-based replay protection
 - Idempotency store for receipt tracking
+- OpenAPI 3.0 spec auto-generation with `x-x402-*` pricing extensions
+- Built-in rate limiting
 
 ## Links
 

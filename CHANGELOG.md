@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **@darklrd/x402-agent-client**: `BudgetTracker` — agent spend budget with string-based decimal math, `reserve`/`release`/`reset` API, `BudgetExceededError` thrown before payment when limit is reached
+- **x402-tool-server**: `openApiPlugin` — auto-generates OpenAPI 3.0 spec from priced routes at `GET /x402/openapi.json`, includes `x-x402-*` pricing extensions, 402 challenge response schemas, lazy-cached, customizable title/version/servers
 - **x402-tool-server**: `rateLimitMiddleware` — in-memory fixed-window rate limiter, runs before payment gate, configurable `maxRequests`/`windowMs`/`keyExtractor`, returns 429 with `Retry-After`
 - **@darklrd/x402-agent-client**: OpenAI adapter helpers — `toOpenAITool`, `toOpenAITools`, `parseToolCall`, `executeToolCall`, `serializeResult`
 - **examples/openai-agent** — full OpenAI function calling loop with x402 tool use; fallback mode when `OPENAI_API_KEY` not set
