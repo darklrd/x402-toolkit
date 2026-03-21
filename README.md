@@ -40,6 +40,7 @@ The [official coinbase/x402](https://github.com/coinbase/x402) supports Express,
 | Docker Compose quickstart | ❌ | ✅ |
 | Built-in rate limiting | ❌ | ✅ |
 | Agent spend budgets | ❌ | ✅ |
+| OpenAPI spec auto-generation | ❌ | ✅ |
 
 ---
 
@@ -277,6 +278,20 @@ console.log(budget.remaining); // "0.049"
 ```
 
 Budget is checked **before** payment — no money leaves if the limit is exceeded. Works with `x402Fetch`, `createTool`, and shared across multiple tools.
+
+### OpenAPI spec auto-generation
+Auto-generate a Swagger-compatible spec from your priced routes:
+
+```ts
+import { openApiPlugin } from 'x402-tool-server';
+
+app.register(openApiPlugin, {
+  title: 'My Paid API',
+  version: '1.0.0',
+});
+```
+
+Visit `GET /x402/openapi.json` to get a full OpenAPI 3.0 spec with `x-x402-price`, `x-x402-asset`, `x-x402-recipient` extensions on every priced endpoint, plus 402 challenge response schemas.
 
 See [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) for the full threat analysis.
 
