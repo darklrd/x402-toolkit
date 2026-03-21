@@ -49,3 +49,6 @@ export type {
 
 export { rateLimitMiddleware } from './rate-limit.js';
 export type { RateLimitOptions } from './rate-limit.js';
+
+export { openApiPlugin } from './openapi.js';
+export type { OpenApiOptions } from './openapi.js';
