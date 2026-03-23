@@ -27,6 +27,16 @@
 export { createX402Middleware } from './middleware.js';
 export type { X402MiddlewareOptions } from './middleware.js';
 
+export { X402EventEmitter } from './events.js';
+export type {
+  X402EventMap,
+  X402ChallengeEvent,
+  X402PaymentEvent,
+  X402ErrorEvent,
+  X402ErrorReason,
+  RequestInfo as X402RequestInfo,
+} from './events.js';
+
 export { pricedRoute, pricedHandler } from './route.js';
 export type { PricedRouteOptions } from './route.js';
 

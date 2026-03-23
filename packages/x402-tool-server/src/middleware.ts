@@ -17,12 +17,14 @@ import type { FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
 import { Readable } from 'stream';
 import { computeRequestHash } from './hash.js';
+import { X402EventEmitter } from './events.js';
 import { MemoryIdempotencyStore } from './idempotency.js';
 import type {
   VerifierInterface,
   IdempotencyStore,
   X402Challenge,
   X402ChallengeBody,
+  PricingConfig,
   StoredResponse,
 } from './types.js';
 import type { ReceiptStore, Receipt } from './receipts.js';
@@ -49,6 +51,9 @@ declare module 'fastify' {
   interface FastifyRequest {
     _x402RawBody?: Buffer;
   }
+  interface FastifyInstance {
+    x402Events: X402EventEmitter;
+  }
 }
 
 const x402Plugin: (options: X402MiddlewareOptions) => FastifyPluginAsync =
@@ -57,6 +62,15 @@ const x402Plugin: (options: X402MiddlewareOptions) => FastifyPluginAsync =
     const idempotencyStore = options.idempotencyStore ?? new MemoryIdempotencyStore();
     const defaultTtl = options.defaultTtlSeconds ?? 300;
     const receiptStore = options.receiptStore;
+
+    const emitter = new X402EventEmitter();
+    fastify.decorate('x402Events', emitter);
+
+    const requestInfo = (request: FastifyRequest) => ({
+      method: request.method,
+      url: request.url,
+      ip: request.ip,
+    });
 
     // ── Register receipt lookup route if store is provided ──────────────
     if (receiptStore) {
@@ -163,6 +177,15 @@ const x402Plugin: (options: X402MiddlewareOptions) => FastifyPluginAsync =
         };
 
         const body: X402ChallengeBody = { x402: challenge };
+
+        if (emitter.listenerCount('x402:challenge') > 0) {
+          emitter.emit('x402:challenge', {
+            challenge,
+            request: requestInfo(request),
+            timestamp: new Date().toISOString(),
+          });
+        }
+
         reply.code(402).send(body);
         return;
       }
@@ -170,6 +193,14 @@ const x402Plugin: (options: X402MiddlewareOptions) => FastifyPluginAsync =
       // Proof is present — verify it.
       const valid = await options.verifier.verify(proofHeader, requestHash, pricing);
       if (!valid) {
+        if (emitter.listenerCount('x402:error') > 0) {
+          emitter.emit('x402:error', {
+            reason: 'invalid_proof',
+            pricing: pricing as PricingConfig,
+            request: requestInfo(request),
+            timestamp: new Date().toISOString(),
+          });
+        }
         reply.code(402).send({
           error: 'Invalid or expired payment proof',
           hint: 'Obtain a fresh challenge by calling this endpoint without X-Payment-Proof',
@@ -184,6 +215,14 @@ const x402Plugin: (options: X402MiddlewareOptions) => FastifyPluginAsync =
         const nonce = proof.nonce;
         if (nonce) {
           if (usedNonces.has(nonce)) {
+            if (emitter.listenerCount('x402:error') > 0) {
+              emitter.emit('x402:error', {
+                reason: 'nonce_replay',
+                pricing: pricing as PricingConfig,
+                request: requestInfo(request),
+                timestamp: new Date().toISOString(),
+              });
+            }
             reply.code(402).send({ error: 'Nonce already used (replay detected)' });
             return;
           }
@@ -221,6 +260,32 @@ const x402Plugin: (options: X402MiddlewareOptions) => FastifyPluginAsync =
           }
         } catch {
           // Non-critical — receipt saving failure should not block the response.
+        }
+      }
+
+      // ── Emit payment event ─────────────────────────────────────────────
+      if (emitter.listenerCount('x402:payment') > 0) {
+        try {
+          const decodedForEvent = Buffer.from(proofHeader, 'base64url').toString('utf8');
+          const proofForEvent = JSON.parse(decodedForEvent) as { nonce?: string; payer?: string; timestamp?: string };
+          const eventUrl = new URL(request.url, 'http://localhost');
+          emitter.emit('x402:payment', {
+            receipt: {
+              nonce: proofForEvent.nonce ?? '',
+              payer: proofForEvent.payer ?? 'unknown',
+              amount: pricing.price as string,
+              asset: pricing.asset as string,
+              network: (pricing.network as string | undefined) ?? 'mock',
+              recipient: pricing.recipient as string,
+              endpoint: eventUrl.pathname,
+              method: request.method,
+              requestHash,
+            },
+            request: requestInfo(request),
+            timestamp: new Date().toISOString(),
+          });
+        } catch {
+          // Non-critical — event emission failure should not block the response.
         }
       }
 
