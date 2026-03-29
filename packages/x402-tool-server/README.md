@@ -50,6 +50,23 @@ app.register(openApiPlugin, {
 // GET /x402/openapi.json → full Swagger spec with x-x402-* pricing extensions
 ```
 
+### Coinbase x402 Spec Compatibility
+
+Opt into Coinbase wire format for interop with the official x402 ecosystem:
+
+```ts
+app.register(createX402Middleware({
+  verifier,
+  wireFormat: 'coinbase', // or 'dual' for both formats
+}));
+```
+
+- `'toolkit'` (default) — current body-based challenge format
+- `'coinbase'` — `PAYMENT-REQUIRED` header challenge, `PAYMENT-SIGNATURE` proof
+- `'dual'` — emits both formats, accepts both proof headers
+
+The server always accepts both `X-Payment-Proof` and `PAYMENT-SIGNATURE` headers regardless of `wireFormat`.
+
 ## Features
 
 - Fastify-native middleware (the only x402 implementation for Fastify)
@@ -60,6 +77,7 @@ app.register(openApiPlugin, {
 - Idempotency store for receipt tracking
 - OpenAPI 3.0 spec auto-generation with `x-x402-*` pricing extensions
 - Built-in rate limiting
+- Coinbase x402 spec compatibility (`wireFormat` option)
 
 ## Links
 

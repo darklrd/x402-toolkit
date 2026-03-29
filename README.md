@@ -41,6 +41,7 @@ The [official coinbase/x402](https://github.com/coinbase/x402) supports Express,
 | Built-in rate limiting | ❌ | ✅ |
 | Agent spend budgets | ❌ | ✅ |
 | OpenAPI spec auto-generation | ❌ | ✅ |
+| Coinbase x402 spec compatibility | — | ✅ (`wireFormat` option) |
 
 ---
 
@@ -294,6 +295,25 @@ app.register(openApiPlugin, {
 Visit `GET /x402/openapi.json` to get a full OpenAPI 3.0 spec with `x-x402-price`, `x-x402-asset`, `x-x402-recipient` extensions on every priced endpoint, plus 402 challenge response schemas.
 
 See [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) for the full threat analysis.
+
+---
+
+## Coinbase x402 Spec Compatibility
+
+The toolkit supports interoperability with the official [Coinbase x402 specification](https://github.com/coinbase/x402) via an opt-in `wireFormat` option:
+
+```ts
+fastify.register(createX402Middleware({
+  verifier,
+  wireFormat: 'dual', // 'toolkit' | 'coinbase' | 'dual'
+}));
+```
+
+- **`'toolkit'`** (default) — current behavior, backward compatible
+- **`'coinbase'`** — emits `PAYMENT-REQUIRED` header, accepts `PAYMENT-SIGNATURE`
+- **`'dual'`** — emits both formats, accepts both proof headers
+
+The client (`x402Fetch`) auto-detects the server's format with no configuration needed. See [docs/DESIGN.md](docs/DESIGN.md#coinbase-x402-spec-compatibility) for details.
 
 ---
 

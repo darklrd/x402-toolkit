@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Coinbase x402 spec compatibility layer (#21)
+  - **x402-tool-server**: `wireFormat` option ('toolkit' | 'coinbase' | 'dual') on `createX402Middleware`
+  - **x402-tool-server**: accepts both `X-Payment-Proof` and `PAYMENT-SIGNATURE` headers regardless of wireFormat
+  - **@darklrd/x402-agent-client**: auto-detects Coinbase `PAYMENT-REQUIRED` header and toolkit `{ x402 }` body
+  - New exports: network/asset mapping utilities, format conversion functions
+  - New types: `CoinbasePaymentRequired`, `CoinbasePaymentRequirements`, `CoinbasePaymentPayload`, `WireFormat`
 - **@darklrd/x402-agent-client**: `BudgetTracker` — agent spend budget with string-based decimal math, `reserve`/`release`/`reset` API, `BudgetExceededError` thrown before payment when limit is reached
 - **x402-tool-server**: `openApiPlugin` — auto-generates OpenAPI 3.0 spec from priced routes at `GET /x402/openapi.json`, includes `x-x402-*` pricing extensions, 402 challenge response schemas, lazy-cached, customizable title/version/servers
 - **x402-tool-server**: `rateLimitMiddleware` — in-memory fixed-window rate limiter, runs before payment gate, configurable `maxRequests`/`windowMs`/`keyExtractor`, returns 429 with `Retry-After`

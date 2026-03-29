@@ -78,6 +78,9 @@ export interface PricingConfig {
   description?: string;
   /** Challenge TTL in seconds, defaults to 300 (5 min) */
   ttlSeconds?: number;
+  coinbaseAssetAddress?: string;
+  coinbaseNetwork?: string;
+  assetDecimals?: number;
 }
 
 // ─── Verifier interface ──────────────────────────────────────────────────────

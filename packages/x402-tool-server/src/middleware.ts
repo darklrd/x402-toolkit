@@ -28,6 +28,12 @@ import type {
   StoredResponse,
 } from './types.js';
 import type { ReceiptStore, Receipt } from './receipts.js';
+import type { WireFormat } from './compat.js';
+import {
+  challengeToPaymentRequired,
+  coinbasePayloadToProofHeader,
+  extractProofHeader,
+} from './compat.js';
 
 export interface X402MiddlewareOptions {
   /** Verifier instance — validates payment proofs */
@@ -44,9 +50,9 @@ export interface X402MiddlewareOptions {
    * and a GET /x402/receipts/:nonce route is registered automatically.
    */
   receiptStore?: ReceiptStore;
+  wireFormat?: WireFormat;
 }
 
-// Extend FastifyRequest to carry raw body bytes captured in preParsing.
 declare module 'fastify' {
   interface FastifyRequest {
     _x402RawBody?: Buffer;
@@ -62,6 +68,7 @@ const x402Plugin: (options: X402MiddlewareOptions) => FastifyPluginAsync =
     const idempotencyStore = options.idempotencyStore ?? new MemoryIdempotencyStore();
     const defaultTtl = options.defaultTtlSeconds ?? 300;
     const receiptStore = options.receiptStore;
+    const wireFormat: WireFormat = options.wireFormat ?? 'toolkit';
 
     const emitter = new X402EventEmitter();
     fastify.decorate('x402Events', emitter);
@@ -155,7 +162,9 @@ const x402Plugin: (options: X402MiddlewareOptions) => FastifyPluginAsync =
       }
 
       // ── Payment proof check ───────────────────────────────────────────────
-      const proofHeader = request.headers['x-payment-proof'] as string | undefined;
+      const extracted = extractProofHeader(request.headers as Record<string, string | string[] | undefined>);
+      const proofHeader = extracted?.proof;
+      const proofFormat = extracted?.format;
 
       if (!proofHeader) {
         // No proof — issue a 402 challenge.
@@ -176,8 +185,6 @@ const x402Plugin: (options: X402MiddlewareOptions) => FastifyPluginAsync =
           description: pricing.description as string | undefined,
         };
 
-        const body: X402ChallengeBody = { x402: challenge };
-
         if (emitter.listenerCount('x402:challenge') > 0) {
           emitter.emit('x402:challenge', {
             challenge,
@@ -186,12 +193,27 @@ const x402Plugin: (options: X402MiddlewareOptions) => FastifyPluginAsync =
           });
         }
 
-        reply.code(402).send(body);
+        if (wireFormat === 'coinbase' || wireFormat === 'dual') {
+          const assetDecimals = (pricing.assetDecimals as number | undefined) ?? 6;
+          const paymentRequired = challengeToPaymentRequired(challenge, url.pathname, assetDecimals);
+          const encoded = Buffer.from(JSON.stringify(paymentRequired), 'utf8').toString('base64');
+          void reply.header('payment-required', encoded);
+        }
+
+        if (wireFormat === 'toolkit' || wireFormat === 'dual') {
+          const body: X402ChallengeBody = { x402: challenge };
+          reply.code(402).send(body);
+        } else {
+          reply.code(402).send({ error: 'Payment Required' });
+        }
         return;
       }
 
-      // Proof is present — verify it.
-      const valid = await options.verifier.verify(proofHeader, requestHash, pricing);
+      // Proof is present — normalize Coinbase proofs, then verify.
+      const normalizedProof = proofFormat === 'coinbase'
+        ? coinbasePayloadToProofHeader(proofHeader)
+        : proofHeader;
+      const valid = await options.verifier.verify(normalizedProof, requestHash, pricing);
       if (!valid) {
         if (emitter.listenerCount('x402:error') > 0) {
           emitter.emit('x402:error', {
@@ -210,7 +232,7 @@ const x402Plugin: (options: X402MiddlewareOptions) => FastifyPluginAsync =
 
       // ── Replay protection: record nonce as used ──────────────────────────
       try {
-        const decoded = Buffer.from(proofHeader, 'base64url').toString('utf8');
+        const decoded = Buffer.from(normalizedProof, 'base64url').toString('utf8');
         const proof = JSON.parse(decoded) as { nonce?: string; expiresAt?: string };
         const nonce = proof.nonce;
         if (nonce) {
@@ -240,7 +262,7 @@ const x402Plugin: (options: X402MiddlewareOptions) => FastifyPluginAsync =
       // ── Save receipt ────────────────────────────────────────────────────
       if (receiptStore) {
         try {
-          const decoded = Buffer.from(proofHeader, 'base64url').toString('utf8');
+          const decoded = Buffer.from(normalizedProof, 'base64url').toString('utf8');
           const proof = JSON.parse(decoded) as { nonce?: string; payer?: string; timestamp?: string };
           if (proof.nonce) {
             const url = new URL(request.url, 'http://localhost');
@@ -266,7 +288,7 @@ const x402Plugin: (options: X402MiddlewareOptions) => FastifyPluginAsync =
       // ── Emit payment event ─────────────────────────────────────────────
       if (emitter.listenerCount('x402:payment') > 0) {
         try {
-          const decodedForEvent = Buffer.from(proofHeader, 'base64url').toString('utf8');
+          const decodedForEvent = Buffer.from(normalizedProof, 'base64url').toString('utf8');
           const proofForEvent = JSON.parse(decodedForEvent) as { nonce?: string; payer?: string; timestamp?: string };
           const eventUrl = new URL(request.url, 'http://localhost');
           emitter.emit('x402:payment', {

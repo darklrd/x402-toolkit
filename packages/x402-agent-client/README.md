@@ -72,6 +72,7 @@ budget.reset(); // start a new session
 - OpenAI function calling adapter
 - Agent spend budgets with `BudgetTracker`
 - Pluggable payer interface (mock or real Solana USDC)
+- Auto-detects Coinbase x402 format (`PAYMENT-REQUIRED` header) — sends `PAYMENT-SIGNATURE` on retry; no configuration needed
 
 ## Links
 

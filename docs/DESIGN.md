@@ -181,3 +181,51 @@ PAYMENT_MODE=solana  # SolanaUSDCPayer/SolanaUSDCVerifier
 SOLANA_CLUSTER=devnet    # default — USDC devnet mint, public devnet RPC
 SOLANA_CLUSTER=mainnet   # USDC mainnet mint, public mainnet RPC (override with SOLANA_RPC_URL)
 ```
+
+---
+
+## Coinbase x402 Spec Compatibility
+
+The toolkit supports interoperability with the official [Coinbase x402 specification](https://github.com/coinbase/x402) via a `wireFormat` option on the server middleware.
+
+### Wire Format Modes
+
+| Mode | Challenge | Proof Headers Accepted |
+|---|---|---|
+| `'toolkit'` (default) | Body `{ x402: {...} }` | `X-Payment-Proof` and `PAYMENT-SIGNATURE` |
+| `'coinbase'` | `PAYMENT-REQUIRED` header (base64 JSON) | `X-Payment-Proof` and `PAYMENT-SIGNATURE` |
+| `'dual'` | Both body and header | `X-Payment-Proof` and `PAYMENT-SIGNATURE` |
+
+### Configuration
+
+```ts
+fastify.register(createX402Middleware({
+  verifier,
+  wireFormat: 'dual', // 'toolkit' | 'coinbase' | 'dual'
+}));
+```
+
+### Key Differences Bridged
+
+| Aspect | Toolkit | Coinbase | Conversion |
+|---|---|---|---|
+| Price format | `"0.001"` (human decimal) | `"1000"` (atomic units) | BigInt arithmetic, 6 decimals default |
+| Network | `"base-sepolia"` | `"eip155:84532"` (CAIP-2) | Bidirectional lookup table |
+| Asset | `"USDC"` (symbol) | Contract address | Bidirectional lookup table |
+| Expiry | ISO-8601 timestamp | `maxTimeoutSeconds` | Computed from current time |
+| Challenge location | JSON body | `PAYMENT-REQUIRED` header | Server emits per wireFormat |
+| Proof header | `X-Payment-Proof` | `PAYMENT-SIGNATURE` | Server accepts both always |
+
+### Client Auto-Detection
+
+`x402Fetch` automatically detects the server's format:
+1. If `PAYMENT-REQUIRED` header is present → Coinbase format, sends `PAYMENT-SIGNATURE` on retry
+2. If body has `{ x402: {...} }` → toolkit format, sends `X-Payment-Proof` on retry
+
+No client configuration needed.
+
+### Design Decisions
+
+- **Server proofs always accepted in both formats**: The server normalizes incoming Coinbase proofs to toolkit format before verification. Adapters (MockVerifier, SolanaUSDCVerifier) are unaware of wire format differences.
+- **Explicit opt-in**: `wireFormat` defaults to `'toolkit'` for backward compatibility. No behavior change for existing users.
+- **Zero new dependencies**: Amount conversion uses BigInt, network/asset maps are hand-rolled lookup tables.
