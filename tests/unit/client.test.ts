@@ -337,3 +337,184 @@ describe('MockPayer + MockVerifier round-trip (without server)', () => {
     expect(valid).toBe(false);
   });
 });
+
+// ── Coinbase format auto-detection ───────────────────────────────────────────
+
+describe('x402Fetch — Coinbase format auto-detection', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it('detects Coinbase 402 from PAYMENT-REQUIRED header', async () => {
+    const payer = new SpyPayer();
+    const coinbasePR = {
+      x402Version: 1,
+      resource: { url: '/weather' },
+      accepts: [
+        {
+          scheme: 'exact',
+          network: 'mock:1',
+          asset: 'USDC',
+          amount: '1000',
+          payTo: '0xTEST',
+          maxTimeoutSeconds: 300,
+          extra: { nonce: 'cb-nonce', requestHash: 'a'.repeat(64) },
+        },
+      ],
+    };
+    const encoded = Buffer.from(JSON.stringify(coinbasePR), 'utf8').toString('base64');
+
+    const mock402 = new Response(JSON.stringify({ error: 'Payment Required' }), {
+      status: 402,
+      headers: { 'payment-required': encoded },
+    });
+    const mock200 = new Response(JSON.stringify({ paid: true }), { status: 200 });
+
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(mock402)
+      .mockResolvedValueOnce(mock200);
+    vi.stubGlobal('fetch', fetchMock);
+
+    const res = await x402Fetch('http://localhost/weather', {}, { payer, maxRetries: 1 });
+    expect(res.status).toBe(200);
+    expect(payer.calls).toHaveLength(1);
+    expect(payer.calls[0]?.challenge.nonce).toBe('cb-nonce');
+    vi.unstubAllGlobals();
+  });
+
+  it('sends PAYMENT-SIGNATURE for Coinbase servers', async () => {
+    const payer = new SpyPayer();
+    const coinbasePR = {
+      x402Version: 1,
+      resource: { url: '/weather' },
+      accepts: [
+        {
+          scheme: 'exact',
+          network: 'mock:1',
+          asset: 'USDC',
+          amount: '1000',
+          payTo: '0xTEST',
+          maxTimeoutSeconds: 300,
+          extra: { nonce: 'cb-nonce-2', requestHash: 'b'.repeat(64) },
+        },
+      ],
+    };
+    const encoded = Buffer.from(JSON.stringify(coinbasePR), 'utf8').toString('base64');
+
+    const mock402 = new Response(JSON.stringify({ error: 'Payment Required' }), {
+      status: 402,
+      headers: { 'payment-required': encoded },
+    });
+    const mock200 = new Response('{}', { status: 200 });
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(mock402)
+      .mockResolvedValueOnce(mock200);
+    vi.stubGlobal('fetch', fetchMock);
+
+    await x402Fetch('http://localhost/weather', {}, { payer, maxRetries: 1 });
+
+    const retryArgs = fetchMock.mock.calls[1] as [string, RequestInit];
+    const headers = retryArgs?.[1]?.headers as Record<string, string>;
+    expect(headers?.['payment-signature']).toBeDefined();
+    expect(headers?.['x-payment-proof']).toBeUndefined();
+    vi.unstubAllGlobals();
+  });
+
+  it('sends X-Payment-Proof for toolkit servers', async () => {
+    const challenge = makeChallenge();
+    const payer = new SpyPayer();
+
+    const mock402 = new Response(JSON.stringify({ x402: challenge }), {
+      status: 402,
+      headers: { 'content-type': 'application/json' },
+    });
+    const mock200 = new Response('{}', { status: 200 });
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(mock402)
+      .mockResolvedValueOnce(mock200);
+    vi.stubGlobal('fetch', fetchMock);
+
+    await x402Fetch('http://localhost/priced', {}, { payer, maxRetries: 1 });
+
+    const retryArgs = fetchMock.mock.calls[1] as [string, RequestInit];
+    const headers = retryArgs?.[1]?.headers as Record<string, string>;
+    expect(headers?.['x-payment-proof']).toBeDefined();
+    expect(headers?.['payment-signature']).toBeUndefined();
+    vi.unstubAllGlobals();
+  });
+
+  it('handles dual-format server (prefers header)', async () => {
+    const challenge = makeChallenge();
+    const payer = new SpyPayer();
+    const coinbasePR = {
+      x402Version: 1,
+      resource: { url: '/weather' },
+      accepts: [
+        {
+          scheme: 'exact',
+          network: 'mock:1',
+          asset: 'USDC',
+          amount: '1000',
+          payTo: '0xTEST',
+          maxTimeoutSeconds: 300,
+          extra: { nonce: challenge.nonce, requestHash: challenge.requestHash },
+        },
+      ],
+    };
+    const encoded = Buffer.from(JSON.stringify(coinbasePR), 'utf8').toString('base64');
+
+    // Dual: both header and body
+    const mock402 = new Response(JSON.stringify({ x402: challenge }), {
+      status: 402,
+      headers: { 'payment-required': encoded, 'content-type': 'application/json' },
+    });
+    const mock200 = new Response('{}', { status: 200 });
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(mock402)
+      .mockResolvedValueOnce(mock200);
+    vi.stubGlobal('fetch', fetchMock);
+
+    await x402Fetch('http://localhost/priced', {}, { payer, maxRetries: 1 });
+
+    // When header is present, should use coinbase format
+    const retryArgs = fetchMock.mock.calls[1] as [string, RequestInit];
+    const headers = retryArgs?.[1]?.headers as Record<string, string>;
+    expect(headers?.['payment-signature']).toBeDefined();
+    vi.unstubAllGlobals();
+  });
+
+  it('Coinbase challenge without nonce in extra still works', async () => {
+    const payer = new SpyPayer();
+    const coinbasePR = {
+      x402Version: 1,
+      resource: { url: '/test' },
+      accepts: [
+        {
+          scheme: 'exact',
+          network: 'mock:1',
+          asset: 'USDC',
+          amount: '1000',
+          payTo: '0xTEST',
+          maxTimeoutSeconds: 300,
+          extra: { requestHash: 'a'.repeat(64) },
+        },
+      ],
+    };
+    const encoded = Buffer.from(JSON.stringify(coinbasePR), 'utf8').toString('base64');
+
+    const mock402 = new Response('{}', {
+      status: 402,
+      headers: { 'payment-required': encoded },
+    });
+    const mock200 = new Response('{}', { status: 200 });
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(mock402)
+      .mockResolvedValueOnce(mock200);
+    vi.stubGlobal('fetch', fetchMock);
+
+    const res = await x402Fetch('http://localhost/test', {}, { payer, maxRetries: 1 });
+    expect(res.status).toBe(200);
+    expect(payer.calls[0]?.challenge.nonce).toBe('');
+    vi.unstubAllGlobals();
+  });
+});

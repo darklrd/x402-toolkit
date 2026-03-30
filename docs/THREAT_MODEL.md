@@ -108,6 +108,8 @@
 | Runaway agent spend | Agent makes unlimited paid API calls, draining funds | `BudgetTracker` caps cumulative spend; `BudgetExceededError` thrown before payment |
 | Concurrent overspend | Parallel fetches both pass budget check before either pays | Optimistic reservation: `reserve()` atomically increments before `payer.pay()`; `release()` rolls back on failure |
 
+| Format confusion attack | Attacker sends a Coinbase-format `PAYMENT-SIGNATURE` with a manipulated `accepted` field referencing different pricing | Middleware always validates proofs against the server's own `PricingConfig` and server-recomputed `requestHash`. The `accepted` field in the Coinbase payload is informational; the server does not trust client-provided pricing |
+
 ---
 
 ## Out of Scope (MVP)

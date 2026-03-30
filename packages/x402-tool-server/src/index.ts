@@ -62,3 +62,24 @@ export type { RateLimitOptions } from './rate-limit.js';
 
 export { openApiPlugin } from './openapi.js';
 export type { OpenApiOptions } from './openapi.js';
+
+export type { WireFormat } from './compat.js';
+export {
+  challengeToPaymentRequired,
+  paymentRequiredToChallenge,
+  toolkitNetworkToCaip2,
+  caip2ToToolkitNetwork,
+  toolkitAssetToAddress,
+  addressToToolkitAsset,
+  humanDecimalToAtomicUnits,
+  atomicUnitsToHumanDecimal,
+  coinbasePayloadToProofHeader,
+  proofHeaderToCoinbasePayload,
+  extractProofHeader,
+} from './compat.js';
+export type {
+  CoinbasePaymentRequired,
+  CoinbasePaymentRequirements,
+  CoinbasePaymentPayload,
+  CoinbaseResourceInfo,
+} from './compat.js';

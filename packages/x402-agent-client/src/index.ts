@@ -41,3 +41,10 @@ export {
   executeToolCall,
 } from './openai.js';
 export type { ParsedToolCall } from './openai.js';
+
+export {
+  detectChallengeFormat,
+  parseCoinbasePaymentRequired,
+  encodeCoinbasePaymentSignature,
+} from './compat.js';
+export type { CoinbasePaymentRequired } from './compat.js';

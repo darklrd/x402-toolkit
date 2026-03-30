@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync, RouteOptions } from 'fastify';
 import fp from 'fastify-plugin';
 import type { PricingConfig } from './types.js';
+import type { WireFormat } from './compat.js';
 
 export interface OpenApiOptions {
   title?: string;
@@ -8,6 +9,7 @@ export interface OpenApiOptions {
   description?: string;
   servers?: Array<{ url: string; description?: string }>;
   includeAllRoutes?: boolean;
+  wireFormat?: WireFormat;
 }
 
 interface OpenApiSchema {
@@ -149,14 +151,38 @@ const openApiPluginImpl: FastifyPluginAsync<OpenApiOptions> = async (
           operation['x-x402-network'] = pricing.network ?? 'mock';
           operation['x-x402-recipient'] = pricing.recipient;
           if (pricing.scheme) operation['x-x402-scheme'] = pricing.scheme;
-          operation.responses['402'] = {
-            description: 'Payment required',
-            content: {
-              'application/json': {
-                schema: { $ref: '#/components/schemas/X402ChallengeBody' },
+
+          const wf = opts.wireFormat ?? 'toolkit';
+          if (wf === 'toolkit' || wf === 'dual') {
+            operation.responses['402'] = {
+              description: 'Payment required',
+              content: {
+                'application/json': {
+                  schema: { $ref: '#/components/schemas/X402ChallengeBody' },
+                },
               },
-            },
-          };
+            };
+          } else {
+            operation.responses['402'] = {
+              description: 'Payment required (Coinbase x402 format via PAYMENT-REQUIRED header)',
+            };
+          }
+
+          if (wf === 'coinbase' || wf === 'dual') {
+            if (!operation.parameters) operation.parameters = [];
+            operation.parameters.push(
+              {
+                name: 'PAYMENT-REQUIRED',
+                in: 'header',
+                schema: { type: 'string' },
+              },
+              {
+                name: 'PAYMENT-SIGNATURE',
+                in: 'header',
+                schema: { type: 'string' },
+              },
+            );
+          }
         }
 
         const routeSchema = route.schema as
