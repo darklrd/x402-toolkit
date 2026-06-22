@@ -135,6 +135,23 @@ describe('x402-mcp E2E (toolkit wire format)', () => {
     expect(receipt?.network).toBe('mock');
   });
 
+  it('emits x402:mcp:payment on app.x402McpEvents for a paid call', async () => {
+    const paidTools: string[] = [];
+    app.x402McpEvents.on('x402:mcp:payment', (event) => paidTools.push(event.toolName));
+
+    const challengeRes = await rpcPost(baseUrl, callBody('get_weather', { city: 'Cairo' }));
+    const challenge = ((await challengeRes.json()) as { x402: { nonce: string } }).x402;
+    const payer = new MockPayer({ secret: SECRET });
+    const proof = await payer.pay(challenge as never, { url: `${baseUrl}/mcp`, method: 'POST' });
+
+    const paid = await rpcPost(baseUrl, callBody('get_weather', { city: 'Cairo' }), {
+      'x-payment-proof': encodeProof(proof),
+    });
+    expect(paid.status).toBe(200);
+
+    expect(paidTools).toContain('get_weather');
+  });
+
   it('rejects replay of the same proof', async () => {
     const challengeRes = await rpcPost(baseUrl, callBody('get_weather', { city: 'Berlin' }));
     const challenge = ((await challengeRes.json()) as { x402: { nonce: string } }).x402;

@@ -29,8 +29,14 @@ declare module 'fastify' {
 
 export const x402McpPlugin = fp(
   async function x402McpPluginImpl(fastify, options: X402McpPluginOptions) {
-    const events = new X402McpEventEmitter();
-    if (!fastify.hasDecorator('x402McpEvents')) {
+    // Reuse the emitter already decorated on the instance (e.g. when the plugin
+    // is registered more than once) so the guard and any `app.x402McpEvents`
+    // listeners share a single emitter.
+    let events: X402McpEventEmitter;
+    if (fastify.hasDecorator('x402McpEvents')) {
+      events = fastify.x402McpEvents;
+    } else {
+      events = new X402McpEventEmitter();
       fastify.decorate('x402McpEvents', events);
     }
 
@@ -60,15 +66,26 @@ export const x402McpPlugin = fp(
         enableJsonResponse: true,
       });
 
+      // Each stateless request gets its own server + transport, so they must be
+      // torn down once the request is done. Run cleanup exactly once: after
+      // handleRequest resolves/throws (the finally), and also if the client
+      // aborts the connection early.
+      let cleaned = false;
       const cleanup = () => {
+        if (cleaned) return;
+        cleaned = true;
         void transport.close();
         void server.close();
       };
       reply.raw.on('close', cleanup);
 
-      await server.connect(transport);
-      reply.hijack();
-      await transport.handleRequest(request.raw, reply.raw, request.body);
+      try {
+        await server.connect(transport);
+        reply.hijack();
+        await transport.handleRequest(request.raw, reply.raw, request.body);
+      } finally {
+        cleanup();
+      }
     }
 
     fastify.route({
