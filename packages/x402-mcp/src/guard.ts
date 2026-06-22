@@ -221,7 +221,10 @@ export function createMcpPaymentGuard(options: McpGuardOptions): McpPaymentGuard
       return {
         action: 'reject',
         status: 402,
-        body: { error: 'Invalid or expired payment proof' },
+        body: {
+          error: 'Invalid or expired payment proof',
+          hint: 'Obtain a fresh challenge by retrying this tools/call without a payment proof header',
+        },
       };
     }
 
