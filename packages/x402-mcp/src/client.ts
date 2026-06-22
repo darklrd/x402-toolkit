@@ -29,21 +29,22 @@ async function parseChallenge(response: Response): Promise<ParsedChallenge | nul
   const header = response.headers.get('payment-required');
   if (header) {
     const challenge = parseCoinbasePaymentRequired(header);
-    // Drain the body so the socket is released before we retry (the Coinbase
-    // path reads only headers, unlike the toolkit path which consumes JSON).
-    await response.body?.cancel().catch(() => undefined);
-    if (challenge) return { challenge, format: 'coinbase' };
-    return null;
+    if (challenge) {
+      // Drain the body so the socket is released before we retry (this path
+      // reads only headers, unlike the toolkit path which consumes JSON).
+      await response.body?.cancel().catch(() => undefined);
+      return { challenge, format: 'coinbase' };
+    }
+    // Unparseable Coinbase header — fall through to the toolkit body, which
+    // `wireFormat: 'dual'` servers also emit.
   }
   try {
     const body = (await response.json()) as unknown;
-    if (
-      body !== null &&
-      typeof body === 'object' &&
-      'x402' in body &&
-      typeof (body as Record<string, unknown>).x402 === 'object'
-    ) {
-      return { challenge: (body as { x402: X402Challenge }).x402, format: 'toolkit' };
+    if (body !== null && typeof body === 'object' && 'x402' in body) {
+      const x402 = (body as Record<string, unknown>).x402;
+      if (x402 !== null && typeof x402 === 'object' && !Array.isArray(x402)) {
+        return { challenge: x402 as X402Challenge, format: 'toolkit' };
+      }
     }
   } catch {
     // not JSON / not a toolkit challenge

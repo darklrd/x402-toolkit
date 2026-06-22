@@ -254,9 +254,11 @@ export function createMcpPaymentGuard(options: McpGuardOptions): McpPaymentGuard
           body: { error: 'Nonce already used (replay detected)' },
         };
       }
-      const expMs = proof.expiresAt
-        ? new Date(proof.expiresAt).getTime() + 60_000
-        : Date.now() + 360_000;
+      // Keep the nonce until its expiry + 60s grace. Fall back to a fixed TTL
+      // if expiresAt is missing or unparsable, otherwise a NaN expiry would
+      // never be swept (the entry would leak forever).
+      const parsedExpiry = proof.expiresAt ? new Date(proof.expiresAt).getTime() : NaN;
+      const expMs = Number.isFinite(parsedExpiry) ? parsedExpiry + 60_000 : Date.now() + 360_000;
       usedNonces.set(nonce, expMs);
     }
 
