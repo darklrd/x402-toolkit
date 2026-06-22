@@ -53,6 +53,7 @@ The [official coinbase/x402](https://github.com/coinbase/x402) supports Express,
 | [`@darklrd/x402-agent-client`](packages/x402-agent-client) | Client — auto-handles 402 → pay → retry |
 | [`x402-adapters`](packages/x402-adapters) | Adapters — mock (offline) + Solana USDC |
 | [`x402-langchain`](packages/x402-langchain) | LangChain `StructuredTool` adapter for x402 |
+| [`x402-mcp`](packages/x402-mcp) | Sell & buy paid MCP `tools/call` over Streamable HTTP |
 
 ---
 

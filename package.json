@@ -17,10 +17,12 @@
     "lint:fix": "eslint --fix 'packages/*/src/**/*.ts' 'examples/*/src/**/*.ts' 'tests/**/*.ts' 'evals/**/*.ts'",
     "typecheck": "pnpm -r run typecheck",
     "eval": "tsx evals/quick_eval.ts",
+    "dev:mcp": "node scripts/mcp-dev.mjs",
     "clean": "pnpm -r run clean && rimraf node_modules"
   },
   "devDependencies": {
     "@langchain/core": "^1.1.31",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@solana/spl-token": "^0.4.14",
     "@solana/web3.js": "^1.98.4",
     "@testing-library/jest-dom": "^6.9.1",
@@ -41,6 +43,7 @@
     "x402-adapters": "workspace:*",
     "@darklrd/x402-agent-client": "workspace:*",
     "x402-langchain": "workspace:*",
+    "x402-mcp": "workspace:*",
     "x402-tool-server": "workspace:*",
     "zod": "^4.3.6",
     "zod-to-json-schema": "^3.25.1"
