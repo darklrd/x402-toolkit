@@ -1,0 +1,62 @@
+{
+  "name": "x402-mcp",
+  "version": "0.1.0",
+  "description": "MCP tools with x402 payment gating — sell and buy paid Model Context Protocol tools",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rimraf dist *.tsbuildinfo",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "peerDependencies": {
+    "@modelcontextprotocol/sdk": ">=1.9.0",
+    "fastify": ">=4.0.0"
+  },
+  "dependencies": {
+    "@darklrd/x402-agent-client": "workspace:*",
+    "fastify-plugin": "^5.1.0",
+    "x402-tool-server": "workspace:*"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@types/node": "^20.14.0",
+    "fastify": "^4.28.0",
+    "typescript": "^5.5.4",
+    "x402-adapters": "workspace:*"
+  },
+  "author": "Shashwat Srivastava <shashwat@iflychat.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/darklrd/x402-toolkit.git",
+    "directory": "packages/x402-mcp"
+  },
+  "homepage": "https://github.com/darklrd/x402-toolkit#readme",
+  "bugs": {
+    "url": "https://github.com/darklrd/x402-toolkit/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "x402",
+    "http-402",
+    "payment",
+    "mcp",
+    "model-context-protocol",
+    "ai-agent",
+    "tool",
+    "micropayment"
+  ]
+}

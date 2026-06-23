@@ -1,0 +1,24 @@
+{
+  "name": "paid-mcp-client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Example: MCP client that pays for tools/call via a MockPayer and budget",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/demo.ts",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@darklrd/x402-agent-client": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "tsx": "^4.21.0",
+    "x402-adapters": "workspace:*",
+    "x402-mcp": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "typescript": "^5.5.4"
+  }
+}
